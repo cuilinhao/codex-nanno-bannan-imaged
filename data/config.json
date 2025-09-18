@@ -1,0 +1,7 @@
+{
+  "selectedKeyId": "",
+  "maxConcurrency": 5,
+  "retryCount": 2,
+  "saveDirectory": "public/generated",
+  "autoSaveBase64": true
+}

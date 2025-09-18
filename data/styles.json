@@ -1,0 +1,10 @@
+{
+  "styles": [],
+  "categories": [
+    {
+      "id": "default",
+      "name": "默认风格",
+      "description": "通用风格分类"
+    }
+  ]
+}
