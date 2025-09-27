@@ -172,8 +172,20 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
   }
 
   try {
-    console.log(`[视频任务 ${task.number}] 开始生成，提示词: ${task.prompt.slice(0, 50)}...`);
+    console.log(`\n${'='.repeat(80)}`);
+    console.log(`[视频任务 ${task.number}] ==================== 开始生成 ====================`);
+    console.log(`[视频任务 ${task.number}] 提示词: ${task.prompt}`);
     console.log(`[视频任务 ${task.number}] 图片URL: ${task.imageUrls?.[0] || '无'}`);
+    console.log(`[视频任务 ${task.number}] 长宽比: ${payload.aspectRatio}`);
+    console.log(`[视频任务 ${task.number}] API Key: ${apiKey.slice(0, 8)}...${apiKey.slice(-4)}`);
+    console.log(`\n[视频任务 ${task.number}] ==================== 请求接口1 ====================`);
+    console.log(`[视频任务 ${task.number}] 请求 URL: ${GENERATE_URL}`);
+    console.log(`[视频任务 ${task.number}] 请求方法: POST`);
+    console.log(`[视频任务 ${task.number}] 请求头:`, {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey.slice(0, 8)}...${apiKey.slice(-4)}`,
+    });
+    console.log(`[视频任务 ${task.number}] 请求体:`, JSON.stringify(payload, null, 2));
 
     const generateResponse = await fetchJson(
       GENERATE_URL,
@@ -188,14 +200,17 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
       900_000,
     );
 
-    console.log(`[视频任务 ${task.number}] API 响应:`, JSON.stringify(generateResponse).slice(0, 200));
+    console.log(`\n[视频任务 ${task.number}] ==================== 接口1响应 ====================`);
+    console.log(`[视频任务 ${task.number}] 完整响应:`, JSON.stringify(generateResponse, null, 2));
 
     const taskId = generateResponse?.data?.taskId;
     if (!taskId) {
-      console.error(`[视频任务 ${task.number}] 完整 API 响应:`, JSON.stringify(generateResponse, null, 2));
-      throw new Error(`生成接口未返回 taskId。响应结构: ${JSON.stringify(generateResponse).slice(0, 500)}`);
+      console.error(`[视频任务 ${task.number}] ❌ 错误: 未找到 taskId`);
+      console.error(`[视频任务 ${task.number}] 响应结构: response?.data?.taskId = ${taskId}`);
+      throw new Error(`生成接口未返回 taskId。响应: ${JSON.stringify(generateResponse)}`);
     }
 
+    console.log(`[视频任务 ${task.number}] ✅ 获取到 taskId: ${taskId}`);
     await updateVideoTask(task.number, { status: '任务已提交，等待处理...', progress: 15 });
 
     const pollUrl = `${RECORD_URL}?taskId=${encodeURIComponent(taskId)}`;
@@ -203,9 +218,19 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
     const maxPollTimes = 120;
     const pollInterval = 5000;
 
+    console.log(`\n[视频任务 ${task.number}] ==================== 开始轮询 ====================`);
+    console.log(`[视频任务 ${task.number}] 轮询 URL: ${pollUrl}`);
+    console.log(`[视频任务 ${task.number}] 轮询间隔: ${pollInterval}ms`);
+    console.log(`[视频任务 ${task.number}] 最大轮询次数: ${maxPollTimes}\n`);
+
     while (pollCount < maxPollTimes) {
       await new Promise((resolve) => setTimeout(resolve, pollInterval));
       pollCount += 1;
+
+      console.log(`[视频任务 ${task.number}] -------------------- 第 ${pollCount} 次轮询 --------------------`);
+      console.log(`[视频任务 ${task.number}] 请求 URL: ${pollUrl}`);
+      console.log(`[视频任务 ${task.number}] 请求方法: GET`);
+
       const pollData = await fetchJson(
         pollUrl,
         {
@@ -217,7 +242,10 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
         900_000,
       );
 
+      console.log(`[视频任务 ${task.number}] 轮询响应:`, JSON.stringify(pollData, null, 2));
+
       if (pollData?.code !== 200) {
+        console.log(`[视频任务 ${task.number}] ⏳ code != 200，继续等待...`);
         await updateVideoTask(task.number, {
           status: `生成中... (轮询 ${pollCount})`,
         });
@@ -225,13 +253,19 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
       }
 
       const payloadData = pollData.data ?? {};
+      console.log(`[视频任务 ${task.number}] successFlag: ${payloadData.successFlag}`);
+
       if (payloadData.successFlag === 1) {
+        console.log(`[视频任务 ${task.number}] ✅ 视频生成成功！`);
         await updateVideoTask(task.number, { status: '生成完成，开始下载...', progress: 95 });
         const resultUrls: string[] = payloadData.response?.resultUrls ?? [];
+        console.log(`[视频任务 ${task.number}] 视频链接:`, resultUrls);
         if (!resultUrls.length) {
           throw new Error('查询接口未返回视频链接');
         }
+    console.log(`[视频任务 ${task.number}] 开始下载视频: ${resultUrls[0]}`);
     const { localPath, actualFilename } = await downloadVideo(resultUrls[0], task.number, saveDir);
+    console.log(`[视频任务 ${task.number}] ✅ 视频下载完成: ${localPath}`);
     await updateVideoTask(task.number, {
       status: '成功',
       progress: 100,
@@ -240,13 +274,16 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
       actualFilename,
       errorMsg: '',
     });
+        console.log(`[视频任务 ${task.number}] ==================== 任务完成 ====================\n`);
         return;
       }
 
       if (payloadData.errorMessage) {
+        console.error(`[视频任务 ${task.number}] ❌ API 返回错误: ${payloadData.errorMessage}`);
         throw new Error(payloadData.errorMessage);
       }
 
+      console.log(`[视频任务 ${task.number}] ⏳ 仍在处理中，继续轮询...`);
       await updateVideoTask(task.number, {
         status: `生成中... (轮询 ${pollCount})`,
         progress: Math.min(90, 15 + pollCount * 2),
