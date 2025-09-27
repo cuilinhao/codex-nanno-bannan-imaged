@@ -1,56 +1,43 @@
-import { NextResponse } from "next/server";
-import crypto from "node:crypto";
+import { NextResponse } from 'next/server';
+import { readAppData, writeAppData } from '@/lib/data-store';
+import type { StyleEntry } from '@/lib/types';
 
-import { readJsonFile, writeJsonFile } from "@/lib/storage";
-import { styleEntrySchema } from "@/lib/validators";
-import type { StyleEntry, StyleStore } from "@/types";
-
-const DEFAULT_STYLE_STORE: StyleStore = {
-  styles: [],
-  categories: [
-    {
-      id: "default",
-      name: "默认风格",
-      description: "通用风格分类",
-    },
-  ],
-};
+export const runtime = 'nodejs';
 
 export async function GET() {
-  const store = await readJsonFile<StyleStore>("styles.json", DEFAULT_STYLE_STORE);
-  return NextResponse.json(store);
+  const data = await readAppData();
+  return NextResponse.json({
+    styles: Object.values(data.styleLibrary),
+    currentStyle: data.currentStyle,
+    customStyleContent: data.customStyleContent,
+  });
 }
 
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const parsed = styleEntrySchema.parse(body);
-    const store = await readJsonFile<StyleStore>("styles.json", DEFAULT_STYLE_STORE);
-
-    const exists = store.categories.some((cat) => cat.id === parsed.categoryId);
-    if (!exists) {
-      return NextResponse.json({ message: "分类不存在" }, { status: 400 });
-    }
-
-    const now = new Date().toISOString();
-    const entry: StyleEntry = {
-      id: crypto.randomUUID(),
-      name: parsed.name,
-      categoryId: parsed.categoryId,
-      content: parsed.content,
-      usageCount: parsed.usageCount ?? 0,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    store.styles.push(entry);
-    await writeJsonFile("styles.json", store);
-
-    return NextResponse.json(entry, { status: 201 });
-  } catch (error: unknown) {
-    return NextResponse.json(
-      { message: error instanceof Error ? error.message : "创建风格失败" },
-      { status: 400 },
-    );
+  const payload = (await request.json()) as Partial<StyleEntry> & { name: string };
+  const name = payload.name?.trim();
+  if (!name || !payload.content?.trim()) {
+    return NextResponse.json({ success: false, message: '风格名称和内容不能为空' }, { status: 400 });
   }
+
+  const data = await readAppData();
+  const now = new Date().toISOString();
+  const existing = data.styleLibrary[name];
+
+  const entry: StyleEntry = {
+    name,
+    content: payload.content.trim(),
+    category: payload.category?.trim() || existing?.category || '自定义',
+    createdTime: existing?.createdTime ?? now,
+    usageCount: existing?.usageCount ?? 0,
+  };
+
+  data.styleLibrary[name] = entry;
+  if (!data.currentStyle) {
+    data.currentStyle = name;
+    data.customStyleContent = entry.content;
+  }
+
+  await writeAppData(data);
+  return NextResponse.json({ success: true, style: entry });
 }

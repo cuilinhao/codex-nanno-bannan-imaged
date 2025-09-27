@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/theme-provider";
-
 import "./globals.css";
+import { Providers } from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nano Banana 批量出图平台",
-  description: "基于 Next.js 的 Nano Banana 批量出图管理界面",
+  title: "Nano Banana 批量出图 Web",
+  description: "Nano banana 批量出图 V4.0 的 Web 版：批量出图、图生视频、风格库、参考图库与密钥管理一站整合",
 };
 
 export default function RootLayout({
@@ -26,12 +24,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
-          {children}
-          <Toaster position="top-right" richColors />
-        </ThemeProvider>
+    <html lang="zh-CN">
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-muted/50`}> 
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
