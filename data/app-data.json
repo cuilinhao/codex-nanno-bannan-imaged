@@ -61,10 +61,10 @@
   },
   "videoTasks": [
     {
-      "number": "1",
+      "number": "2",
       "prompt": "美女跳舞",
       "imageUrls": [
-        "https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fimage109.360doc.com%2FDownloadImg%2F2024%2F02%2F1109%2F279562181_2_20240211091336301&refer=http%3A%2F%2Fimage109.360doc.com&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=auto?sec=1761313514&t=c528074f3b13d1dd8f80a0bd28506b67"
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759025548036/rumi.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20250928%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250928T021236Z&X-Amz-Expires=300&X-Amz-Signature=e00afa22a1013497957317d6693c9b29f062efdf0be460c93a4435bb251f5e76&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
       ],
       "aspectRatio": "16:9",
       "watermark": "",
@@ -72,11 +72,14 @@
       "seeds": "",
       "enableFallback": false,
       "enableTranslation": true,
-      "status": "失败",
-      "progress": 5,
-      "createdAt": "2025-09-27T14:30:20.922Z",
-      "errorMsg": "生成接口未返回 taskId。响应结构: {\"code\":402,\"msg\":\"The current credits are insufficient. Please top up.\",\"data\":null}",
-      "updatedAt": "2025-09-27T14:30:25.564Z"
+      "status": "成功",
+      "progress": 100,
+      "createdAt": "2025-09-28T02:12:54.375Z",
+      "errorMsg": "",
+      "updatedAt": "2025-09-28T02:16:50.039Z",
+      "localPath": "generated_videos/2_1759025808169_f9d8bcccd55df58148b9fff4ab190bcc_1759025802.mp4",
+      "remoteUrl": "https://tempfile.aiquickdraw.com/p/f9d8bcccd55df58148b9fff4ab190bcc_1759025802.mp4",
+      "actualFilename": "2_1759025808169_f9d8bcccd55df58148b9fff4ab190bcc_1759025802.mp4"
     }
   ],
   "generatedImages": {},

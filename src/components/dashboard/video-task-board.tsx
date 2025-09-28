@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
@@ -35,7 +35,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusIcon, PencilIcon, Trash2Icon, FilmIcon, PlayCircleIcon } from 'lucide-react';
+import { PlusIcon, PencilIcon, Trash2Icon, FilmIcon, PlayCircleIcon, FolderUpIcon } from 'lucide-react';
 import { api, VideoTask } from '@/lib/api';
 import { cn } from '@/lib/utils';
 
@@ -52,6 +52,15 @@ interface VideoTaskDraft {
 }
 
 const aspectRatioOptions = ['16:9', '9:16', '1:1', '4:3'];
+
+interface ImageUploadItem {
+  id: string;
+  name: string;
+  progress: number;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  url?: string;
+  error?: string;
+}
 
 const STATUS_COLOR: Record<string, string> = {
   等待中: 'bg-slate-100 text-slate-700 border border-slate-200',
@@ -86,6 +95,22 @@ function stringifyImageUrls(urls: string[]) {
   return urls.join('\n');
 }
 
+function sanitizeSegment(segment: string) {
+  return segment
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
+function sanitizeRelativePath(raw: string) {
+  const parts = raw.split(/[\\/]/).filter(Boolean);
+  return parts
+    .map(sanitizeSegment)
+    .filter(Boolean)
+    .join('/');
+}
+
 export function VideoTaskBoard() {
   const queryClient = useQueryClient();
   const { data: videoData, isLoading } = useQuery({
@@ -117,6 +142,182 @@ export function VideoTaskBoard() {
       enableTranslation: settings?.videoSettings.enableTranslation,
     }),
   );
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [imageUploads, setImageUploads] = useState<ImageUploadItem[]>([]);
+  const folderInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (folderInputRef.current) {
+      folderInputRef.current.setAttribute('webkitdirectory', '');
+      folderInputRef.current.setAttribute('directory', '');
+    }
+  }, []);
+
+  const uploadFileToR2 = async (
+    file: File,
+    batchPrefix: string,
+    onProgress: (value: number) => void,
+  ): Promise<{ key: string; publicUrl?: string | null; readUrl?: string | null }> => {
+    const contentType = file.type || 'application/octet-stream';
+    const relative = (file as File & { webkitRelativePath?: string }).webkitRelativePath ?? file.name;
+    const trimmed = relative.includes('/') ? relative.split('/').slice(1).join('/') : relative;
+    const sanitized = sanitizeRelativePath(trimmed || file.name) || sanitizeSegment(file.name) || 'image';
+    const key = `${batchPrefix}/${sanitized}`;
+
+    console.log('[VideoTaskBoard] 预签名请求', { key, contentType, size: file.size });
+    const presignResponse = await fetch('/api/r2/presign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, contentType }),
+    });
+
+    if (!presignResponse.ok) {
+      const message = await presignResponse.text();
+      throw new Error(message || '获取预签名链接失败');
+    }
+
+    const presignData = (await presignResponse.json()) as {
+      url: string;
+      key: string;
+      publicUrl?: string | null;
+    };
+    console.log('[VideoTaskBoard] 预签名成功', presignData);
+
+    await new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('PUT', presignData.url, true);
+      xhr.setRequestHeader('Content-Type', contentType);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = Math.round((event.loaded / event.total) * 100);
+          onProgress(progress);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status === 200 || xhr.status === 204) {
+          onProgress(100);
+          resolve();
+        } else {
+          reject(new Error(`上传失败 (HTTP ${xhr.status})`));
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error('上传过程中发生错误'));
+      };
+
+      xhr.ontimeout = () => {
+        reject(new Error('上传超时'));
+      };
+
+      xhr.send(file);
+    });
+
+    let readUrl = presignData.publicUrl ?? null;
+    if (!readUrl) {
+      const readResponse = await fetch(`/api/r2/presign-get?key=${encodeURIComponent(presignData.key)}`);
+      if (readResponse.ok) {
+        const readData = (await readResponse.json()) as { url?: string };
+        readUrl = readData.url ?? null;
+      }
+    }
+
+    console.log('[VideoTaskBoard] 单文件上传完成', { key: presignData.key, readUrl, publicUrl: presignData.publicUrl });
+    return { key: presignData.key, publicUrl: presignData.publicUrl, readUrl };
+  };
+
+  const uploadImagesFromFiles = async (files: File[]) => {
+    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+    if (!imageFiles.length) {
+      toast.error('所选文件夹内没有图片文件');
+      return;
+    }
+
+    const batchPrefix = `uploads/video-references/${Date.now()}`;
+    const batchId = Date.now();
+    const initialStates = imageFiles.map((file, index) => ({
+      id: `${batchId}-${index}`,
+      name: file.name,
+      progress: 0,
+      status: 'pending' as const,
+    }));
+    setImageUploads(initialStates);
+    setIsUploadingImages(true);
+
+    const collectedUrls: string[] = [];
+
+    for (let index = 0; index < imageFiles.length; index += 1) {
+      const file = imageFiles[index];
+      const itemId = initialStates[index].id;
+      setImageUploads((prev) =>
+        prev.map((item) => (item.id === itemId ? { ...item, status: 'uploading', progress: 0 } : item)),
+      );
+
+      try {
+        const result = await uploadFileToR2(file, batchPrefix, (progress) => {
+          setImageUploads((prev) =>
+            prev.map((item) => (item.id === itemId ? { ...item, progress } : item)),
+          );
+        });
+
+        const finalUrl = result.publicUrl ?? result.readUrl;
+        setImageUploads((prev) =>
+          prev.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  status: 'success',
+                  progress: 100,
+                  url: finalUrl ?? undefined,
+                }
+              : item,
+          ),
+        );
+
+        if (finalUrl) {
+          collectedUrls.push(finalUrl);
+        }
+      } catch (error) {
+        const message = (error as Error).message || '上传失败';
+        console.error('[VideoTaskBoard] 上传失败', { file: file.name, message });
+        setImageUploads((prev) =>
+          prev.map((item) =>
+            item.id === itemId
+              ? {
+                  ...item,
+                  status: 'error',
+                  error: message,
+                }
+              : item,
+          ),
+        );
+        toast.error(`${file.name}: ${message}`);
+      }
+    }
+
+    if (collectedUrls.length) {
+      setDraft((prev) => {
+        const merged = Array.from(new Set([...prev.imageUrls, ...collectedUrls]));
+        return { ...prev, imageUrls: merged };
+      });
+      toast.success(`已添加 ${collectedUrls.length} 张参考图`);
+    }
+
+    setIsUploadingImages(false);
+  };
+
+  const handleFolderButtonClick = () => {
+    folderInputRef.current?.click();
+  };
+
+  const handleFolderChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const fileList = Array.from(event.target.files ?? []);
+    event.target.value = '';
+    if (!fileList.length) return;
+    uploadImagesFromFiles(fileList);
+  };
 
   const addTaskMutation = useMutation({
     mutationFn: (task: Partial<VideoTask> & { prompt: string }) => api.addVideoTask(task),
@@ -215,6 +416,8 @@ export function VideoTaskBoard() {
         enableTranslation: settings?.videoSettings.enableTranslation,
       }),
     );
+    setImageUploads([]);
+    setIsUploadingImages(false);
     setDialogOpen(true);
   };
 
@@ -242,6 +445,8 @@ export function VideoTaskBoard() {
       enableFallback: task.enableFallback,
       enableTranslation: task.enableTranslation,
     });
+    setImageUploads([]);
+    setIsUploadingImages(false);
     setDialogOpen(true);
   };
 
@@ -477,6 +682,14 @@ export function VideoTaskBoard() {
             <DialogTitle>{editing ? `编辑视频任务 #${editing.number}` : '添加视频任务'}</DialogTitle>
             <DialogDescription>将提示词与参考图 URL 发送至 Veo3 视频生成接口。</DialogDescription>
           </DialogHeader>
+          <input
+            ref={folderInputRef}
+            type="file"
+            multiple
+            accept="image/*"
+            className="hidden"
+            onChange={handleFolderChange}
+          />
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2 space-y-2">
               <Label htmlFor="video-prompt">视频提示词</Label>
@@ -488,17 +701,75 @@ export function VideoTaskBoard() {
                 placeholder="请输入适用于 Veo3 的视频提示词..."
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="video-images">参考图 URL（每行一个，可选）</Label>
-              <Textarea
-                id="video-images"
-                rows={6}
-                value={stringifyImageUrls(draft.imageUrls)}
-                onChange={(event) =>
-                  setDraft((prev) => ({ ...prev, imageUrls: parseImageUrls(event.target.value) }))
-                }
-                placeholder={'https://example.com/image1.png\nhttps://example.com/image2.png'}
-              />
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="video-images">参考图 URL（每行一个，可选）</Label>
+                <Textarea
+                  id="video-images"
+                  rows={6}
+                  value={stringifyImageUrls(draft.imageUrls)}
+                  onChange={(event) =>
+                    setDraft((prev) => ({ ...prev, imageUrls: parseImageUrls(event.target.value) }))
+                  }
+                  placeholder={'https://example.com/image1.png\nhttps://example.com/image2.png'}
+                />
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFolderButtonClick}
+                  disabled={isUploadingImages}
+                >
+                  <FolderUpIcon className="mr-2 h-4 w-4" /> 上传参考图文件夹
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  选择包含图片的文件夹，系统将自动上传并填入 URL。
+                  {isUploadingImages ? ' 正在上传...' : ''}
+                </span>
+              </div>
+              {imageUploads.length > 0 && (
+                <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+                  {imageUploads.map((item) => (
+                    <div key={item.id} className="space-y-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <span className="font-medium text-slate-700">{item.name}</span>
+                        <span
+                          className={cn(
+                            'whitespace-nowrap rounded px-1.5 py-0.5 font-medium',
+                            item.status === 'success'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : item.status === 'error'
+                                ? 'bg-rose-100 text-rose-700'
+                                : 'bg-sky-100 text-sky-700',
+                          )}
+                        >
+                          {item.status === 'success'
+                            ? '上传完成'
+                            : item.status === 'error'
+                              ? '上传失败'
+                              : '上传中'}
+                        </span>
+                      </div>
+                      <Progress value={item.progress} className="h-1.5" />
+                      {item.url ? (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs text-blue-600 underline"
+                        >
+                          预览链接
+                        </a>
+                      ) : null}
+                      {item.error ? (
+                        <p className="text-xs text-rose-600">{item.error}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>画幅比例</Label>
