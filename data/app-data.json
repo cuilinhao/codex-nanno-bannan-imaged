@@ -48,8 +48,178 @@
       "lastUsed": "从未使用"
     }
   },
-  "prompts": [],
-  "promptNumbers": {},
+  "prompts": [
+    {
+      "number": "1",
+      "prompt": "[主体]\n角色：三个头juni\n表情：惊恐\n动作：三个头juni有三个头部，正对着镜子，三个头部同时张大嘴巴。\n[环境]\n一个明亮的现代风格卫生间，背景是白色的墙壁和窗户。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "2",
+      "prompt": "[主体]\n角色：女人miya, 女人luyi, 女人rumi\n表情：震惊\n动作：女人miya、女人luyi和女人rumi并排站立，看着前方，都张着嘴巴。\n[环境]\n一个明亮的现代风格卫生间，背景是镜子和淋浴房。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "3",
+      "prompt": "[主体]\n角色：三个头juni\n表情：悲伤\n动作：三个头juni的三个头部都闭着眼睛，正在哭泣，眼泪从眼睛流下。\n[环境]\n一个明亮的现代风格卫生间，三个头juni站在洗手台的边缘。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "4",
+      "prompt": "[主体]\n角色：女人miya, 女人luyi, 女人rumi\n表情：开心\n动作：女人miya、女人luyi和女人rumi站在一起，手指指向前方，一起大笑。\n[环境]\n一个客厅。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "5",
+      "prompt": "[主体]\n角色：三个头juni\n表情：惊恐\n动作：三个头juni的三个头部都张大嘴巴，双手合十放在胸前。\n[环境]\n一个明亮的现代办公室，背景模糊。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "6",
+      "prompt": "[主体]\n角色：女人miya, 女人luyi, 女人rumi\n表情：开心\n动作：女人miya、女人luyi和女人rumi站成一排，双手竖起大拇指。\n[环境]\n一个现代风格的客厅，背景是沙发和窗户。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "7",
+      "prompt": "[主体]\n角色：女人miya\n表情：开心\n动作：女人miya走在人行道上，朝向镜头。\n[环境]\n一条繁华的城市街道，两旁是高楼大厦，背景中有行人。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "8",
+      "prompt": "[主体]\n角色：女人miya, 一个研究员\n表情：愤怒\n动作：女人miya对面前的一个研究员说话，研究员低头看着女人miya。\n[环境]\n一个明亮的实验室。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "9",
+      "prompt": "[主体]\n角色：女人miya\n表情：开心\n动作：女人miya双手拿着一个巨大的斧头，走在人行道上。\n[环境]\n一条繁华的城市街道，背景是模糊的建筑和车辆。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "10",
+      "prompt": "[主体]\n角色：女人miya\n表情：兴奋\n动作：女人miya举起手中的巨大斧头，仰头大笑。\n[环境]\n一个现代风格的客厅，背景是沙发和地毯。\n[时间]\n白天\n[天气]\n无\n[视角]\n仰视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "11",
+      "prompt": "[主体]\n角色：三个头juni, 女人miya\n表情：惊恐\n动作：三个头juni在前景中逃跑，女人miya在背景中追赶。\n[环境]\n一个木地板的房间，背景是窗户。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "12",
+      "prompt": "[主体]\n角色：女人luyi\n表情：愤怒\n动作：女人luyi举起一个装有发光液体的烧瓶，正在观察它。\n[环境]\n一个化学实验室，桌子上摆满了各种颜色的烧瓶和试管。\n[时间]\n夜晚\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "13",
+      "prompt": "[主体]\n角色：女人luyi\n表情：愤怒\n动作：女人luyi拿着一个巨大的注射器，注射器里面是绿色的液体。\n[环境]\n一个光线昏暗的房间。\n[时间]\n夜晚\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "14",
+      "prompt": "[主体]\n角色：三个头juni, 女人luyi\n表情：惊恐\n动作：女人luyi将巨大的注射器（注射器里面有绿色的液体）对准三个头juni的肚子，三个头juni的三个头表情惊恐。\n[环境]\n一个现代风格的客厅，背景是沙发。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "15",
+      "prompt": "[主体]\n角色：三个头juni\n表情：愤怒\n动作：三个头juni的三个头部都变成红色，露出愤怒的表情，它坐在沙发上。\n[环境]\n一个现代风格的客厅。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "16",
+      "prompt": "[主体]\n角色：女人miya, 女人luyi\n表情：开心\n动作：女人miya和女人luyi并排站着，开心地大笑。\n[环境]\n一个房间内，背景是窗户。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "17",
+      "prompt": "[主体]\n角色：三个头juni, 女人rumi\n表情：悲伤\n动作：女人rumi拥抱着三个头juni，三个头juni的三个头都露出悲伤的表情并流泪。\n[环境]\n一个现代风格的客厅。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "18",
+      "prompt": "[主体]\n角色：女人rumi\n表情：开心\n动作：女人rumi骑着一辆黑色的踏板车在路上行驶。\n[环境]\n一条沙漠公路，天空晴朗。\n[时间]\n白天\n[天气]\n晴天\n[视角]\n平视\n[景別]\n全景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "19",
+      "prompt": "[主体]\n角色：女人rumi, 一个男人\n表情：开心\n动作：一个男人将一个发光的橙色物体递给女人rumi，女人rumi双手捧着它。\n[环境]\n一个化学实验室，背景有很多瓶瓶罐罐。\n[时间]\n夜晚\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "20",
+      "prompt": "[主体]\n角色：三个头juni, 女人rumi\n表情：惊讶\n动作：女人rumi将一个小瓶子（瓶子内是黄色发光液体）递给三个头juni，三个头juni的三个头都惊讶地看着瓶子。\n[环境]\n一个现代风格的客厅。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    },
+    {
+      "number": "21",
+      "prompt": "[主体]\n角色：三个头juni, 女人miya, 女人luyi\n表情：愤怒, 惊恐\n动作：三个头juni（现在只有一个头）举着一个擀面杖，追赶着正在惊恐逃跑的女人miya和女人luyi。\n[环境]\n一个木地板的房间。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景",
+      "status": "等待中",
+      "createdAt": "2025-09-29T12:57:04.021Z",
+      "updatedAt": "2025-09-29T12:57:04.021Z"
+    }
+  ],
+  "promptNumbers": {
+    "[主体]\n角色：三个头juni\n表情：惊恐\n动作：三个头juni有三个头部，正对着镜子，三个头部同时张大嘴巴。\n[环境]\n一个明亮的现代风格卫生间，背景是白色的墙壁和窗户。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "1",
+    "[主体]\n角色：女人miya, 女人luyi, 女人rumi\n表情：震惊\n动作：女人miya、女人luyi和女人rumi并排站立，看着前方，都张着嘴巴。\n[环境]\n一个明亮的现代风格卫生间，背景是镜子和淋浴房。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "2",
+    "[主体]\n角色：三个头juni\n表情：悲伤\n动作：三个头juni的三个头部都闭着眼睛，正在哭泣，眼泪从眼睛流下。\n[环境]\n一个明亮的现代风格卫生间，三个头juni站在洗手台的边缘。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "3",
+    "[主体]\n角色：女人miya, 女人luyi, 女人rumi\n表情：开心\n动作：女人miya、女人luyi和女人rumi站在一起，手指指向前方，一起大笑。\n[环境]\n一个客厅。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "4",
+    "[主体]\n角色：三个头juni\n表情：惊恐\n动作：三个头juni的三个头部都张大嘴巴，双手合十放在胸前。\n[环境]\n一个明亮的现代办公室，背景模糊。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "5",
+    "[主体]\n角色：女人miya, 女人luyi, 女人rumi\n表情：开心\n动作：女人miya、女人luyi和女人rumi站成一排，双手竖起大拇指。\n[环境]\n一个现代风格的客厅，背景是沙发和窗户。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景": "6",
+    "[主体]\n角色：女人miya\n表情：开心\n动作：女人miya走在人行道上，朝向镜头。\n[环境]\n一条繁华的城市街道，两旁是高楼大厦，背景中有行人。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景": "7",
+    "[主体]\n角色：女人miya, 一个研究员\n表情：愤怒\n动作：女人miya对面前的一个研究员说话，研究员低头看着女人miya。\n[环境]\n一个明亮的实验室。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "8",
+    "[主体]\n角色：女人miya\n表情：开心\n动作：女人miya双手拿着一个巨大的斧头，走在人行道上。\n[环境]\n一条繁华的城市街道，背景是模糊的建筑和车辆。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景": "9",
+    "[主体]\n角色：女人miya\n表情：兴奋\n动作：女人miya举起手中的巨大斧头，仰头大笑。\n[环境]\n一个现代风格的客厅，背景是沙发和地毯。\n[时间]\n白天\n[天气]\n无\n[视角]\n仰视\n[景别]\n中景": "10",
+    "[主体]\n角色：三个头juni, 女人miya\n表情：惊恐\n动作：三个头juni在前景中逃跑，女人miya在背景中追赶。\n[环境]\n一个木地板的房间，背景是窗户。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景": "11",
+    "[主体]\n角色：女人luyi\n表情：愤怒\n动作：女人luyi举起一个装有发光液体的烧瓶，正在观察它。\n[环境]\n一个化学实验室，桌子上摆满了各种颜色的烧瓶和试管。\n[时间]\n夜晚\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "12",
+    "[主体]\n角色：女人luyi\n表情：愤怒\n动作：女人luyi拿着一个巨大的注射器，注射器里面是绿色的液体。\n[环境]\n一个光线昏暗的房间。\n[时间]\n夜晚\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "13",
+    "[主体]\n角色：三个头juni, 女人luyi\n表情：惊恐\n动作：女人luyi将巨大的注射器（注射器里面有绿色的液体）对准三个头juni的肚子，三个头juni的三个头表情惊恐。\n[环境]\n一个现代风格的客厅，背景是沙发。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "14",
+    "[主体]\n角色：三个头juni\n表情：愤怒\n动作：三个头juni的三个头部都变成红色，露出愤怒的表情，它坐在沙发上。\n[环境]\n一个现代风格的客厅。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "15",
+    "[主体]\n角色：女人miya, 女人luyi\n表情：开心\n动作：女人miya和女人luyi并排站着，开心地大笑。\n[环境]\n一个房间内，背景是窗户。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "16",
+    "[主体]\n角色：三个头juni, 女人rumi\n表情：悲伤\n动作：女人rumi拥抱着三个头juni，三个头juni的三个头都露出悲伤的表情并流泪。\n[环境]\n一个现代风格的客厅。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "17",
+    "[主体]\n角色：女人rumi\n表情：开心\n动作：女人rumi骑着一辆黑色的踏板车在路上行驶。\n[环境]\n一条沙漠公路，天空晴朗。\n[时间]\n白天\n[天气]\n晴天\n[视角]\n平视\n[景別]\n全景": "18",
+    "[主体]\n角色：女人rumi, 一个男人\n表情：开心\n动作：一个男人将一个发光的橙色物体递给女人rumi，女人rumi双手捧着它。\n[环境]\n一个化学实验室，背景有很多瓶瓶罐罐。\n[时间]\n夜晚\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "19",
+    "[主体]\n角色：三个头juni, 女人rumi\n表情：惊讶\n动作：女人rumi将一个小瓶子（瓶子内是黄色发光液体）递给三个头juni，三个头juni的三个头都惊讶地看着瓶子。\n[环境]\n一个现代风格的客厅。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n中景": "20",
+    "[主体]\n角色：三个头juni, 女人miya, 女人luyi\n表情：愤怒, 惊恐\n动作：三个头juni（现在只有一个头）举着一个擀面杖，追赶着正在惊恐逃跑的女人miya和女人luyi。\n[环境]\n一个木地板的房间。\n[时间]\n白天\n[天气]\n无\n[视角]\n平视\n[景别]\n全景": "21"
+  },
   "videoSettings": {
     "apiKey": "",
     "savePath": "public/generated_videos",
@@ -80,6 +250,26 @@
       "localPath": "generated_videos/2_1759025808169_f9d8bcccd55df58148b9fff4ab190bcc_1759025802.mp4",
       "remoteUrl": "https://tempfile.aiquickdraw.com/p/f9d8bcccd55df58148b9fff4ab190bcc_1759025802.mp4",
       "actualFilename": "2_1759025808169_f9d8bcccd55df58148b9fff4ab190bcc_1759025802.mp4"
+    },
+    {
+      "number": "3",
+      "prompt": "测试",
+      "imageUrls": [
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759150565565/1.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20250929%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250929T125608Z&X-Amz-Expires=300&X-Amz-Signature=b236677b3f77a2c71aa146c5328e34691207ab4d2d6e13a514cc7b26f00f8961&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759150565565/2.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20250929%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250929T125610Z&X-Amz-Expires=300&X-Amz-Signature=a812616d8ca825df8f9abd723e2de73c92a9489f79ede3eb6db6b3a01fff2ff4&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759150565565/3.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20250929%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250929T125611Z&X-Amz-Expires=300&X-Amz-Signature=098077238bce386b94ad2035595e38047e3c1d6e245f19f4293f0621efedf434&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759150565565/4.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20250929%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250929T125612Z&X-Amz-Expires=300&X-Amz-Signature=b867bb13fbbcb181ec6857cfd12a56356caa1745942b072093f04ebabd9e3a6f&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject",
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759150565565/5.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20250929%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20250929T125613Z&X-Amz-Expires=300&X-Amz-Signature=9a298d6d5b16721de2237ef63c5d26319f4eb0e7e09093ebb2ccebb1b858d5bf&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
+      ],
+      "aspectRatio": "16:9",
+      "watermark": "",
+      "callbackUrl": "",
+      "seeds": "",
+      "enableFallback": false,
+      "enableTranslation": true,
+      "status": "等待中",
+      "progress": 0,
+      "createdAt": "2025-09-29T12:56:44.843Z"
     }
   ],
   "generatedImages": {},

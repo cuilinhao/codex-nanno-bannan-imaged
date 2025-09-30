@@ -677,7 +677,7 @@ export function VideoTaskBoard() {
       </CardContent>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>{editing ? `编辑视频任务 #${editing.number}` : '添加视频任务'}</DialogTitle>
             <DialogDescription>将提示词与参考图 URL 发送至 Veo3 视频生成接口。</DialogDescription>
@@ -690,7 +690,7 @@ export function VideoTaskBoard() {
             className="hidden"
             onChange={handleFolderChange}
           />
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-2 overflow-y-auto flex-1">
             <div className="md:col-span-2 space-y-2">
               <Label htmlFor="video-prompt">视频提示词</Label>
               <Textarea
@@ -704,14 +704,54 @@ export function VideoTaskBoard() {
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="video-images">参考图 URL（每行一个，可选）</Label>
+                <div className="space-y-2 rounded-md border border-slate-200 bg-white p-3 max-h-40 overflow-y-auto">
+                  {draft.imageUrls.length > 0 ? (
+                    draft.imageUrls.map((url, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-xs group">
+                        <span className="text-slate-500 shrink-0">{idx + 1}.</span>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 hover:underline truncate flex-1"
+                          title={url}
+                        >
+                          {url}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setDraft((prev) => ({
+                              ...prev,
+                              imageUrls: prev.imageUrls.filter((_, i) => i !== idx),
+                            }));
+                          }}
+                          className="text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-xs text-slate-400 text-center py-2">暂无参考图，请上传文件夹或手动粘贴 URL</p>
+                  )}
+                </div>
                 <Textarea
                   id="video-images"
-                  rows={6}
-                  value={stringifyImageUrls(draft.imageUrls)}
-                  onChange={(event) =>
-                    setDraft((prev) => ({ ...prev, imageUrls: parseImageUrls(event.target.value) }))
-                  }
-                  placeholder={'https://example.com/image1.png\nhttps://example.com/image2.png'}
+                  rows={2}
+                  value=""
+                  onChange={(event) => {
+                    const newUrls = parseImageUrls(event.target.value);
+                    if (newUrls.length > 0) {
+                      setDraft((prev) => ({
+                        ...prev,
+                        imageUrls: Array.from(new Set([...prev.imageUrls, ...newUrls])),
+                      }));
+                      event.target.value = '';
+                    }
+                  }}
+                  placeholder="粘贴 URL 后自动添加，支持多行..."
+                  className="text-xs"
                 />
               </div>
               <div className="flex flex-wrap items-center gap-3">
@@ -730,11 +770,11 @@ export function VideoTaskBoard() {
                 </span>
               </div>
               {imageUploads.length > 0 && (
-                <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+                <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3 max-h-48 overflow-y-auto">
                   {imageUploads.map((item) => (
                     <div key={item.id} className="space-y-2">
                       <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <span className="font-medium text-slate-700">{item.name}</span>
+                        <span className="font-medium text-slate-700 truncate max-w-[200px]" title={item.name}>{item.name}</span>
                         <span
                           className={cn(
                             'whitespace-nowrap rounded px-1.5 py-0.5 font-medium',
@@ -746,22 +786,25 @@ export function VideoTaskBoard() {
                           )}
                         >
                           {item.status === 'success'
-                            ? '上传完成'
+                            ? '成功'
                             : item.status === 'error'
-                              ? '上传失败'
+                              ? '失败'
                               : '上传中'}
                         </span>
                       </div>
                       <Progress value={item.progress} className="h-1.5" />
                       {item.url ? (
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs text-blue-600 underline"
-                        >
-                          预览链接
-                        </a>
+                        <div className="text-xs">
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-blue-600 hover:underline truncate block"
+                            title={item.url}
+                          >
+                            {item.url}
+                          </a>
+                        </div>
                       ) : null}
                       {item.error ? (
                         <p className="text-xs text-rose-600">{item.error}</p>
