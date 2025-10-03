@@ -156,7 +156,7 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
   const payload: Record<string, unknown> = {
     prompt: task.prompt,
     imageUrls: task.imageUrls ?? [],
-    model: 'veo3',
+    model: 'veo3_fast',
     aspectRatio: task.aspectRatio ?? '16:9',
     enableFallback: Boolean(task.enableFallback),
     enableTranslation: task.enableTranslation !== false,

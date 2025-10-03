@@ -47,7 +47,7 @@ export async function generateVideoClient(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'veo3',
+      model: 'veo3_fast',
       ...payload,
     }),
   });

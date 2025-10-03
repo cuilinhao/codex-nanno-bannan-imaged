@@ -7,7 +7,7 @@ const RECORD_URL = 'https://api.kie.ai/api/v1/veo/record-info';
 const testPayload = {
   prompt: "A dog playing in a park",
   imageUrls: [],
-  model: "veo3",
+  model: "veo3_fast",
   aspectRatio: "16:9",
   enableFallback: false,
   enableTranslation: true
