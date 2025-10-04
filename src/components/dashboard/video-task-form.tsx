@@ -75,6 +75,24 @@ function generateRowId() {
   return `row-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function truncateUrl(url: string, maxLength: number = 50): string {
+  if (!url || url.length <= maxLength) return url;
+
+  // 尝试从URL中提取文件名
+  const match = url.match(/\/([^/?#]+\.[^/?#]+)(?:[?#]|$)/);
+  if (match && match[1]) {
+    const filename = match[1];
+    if (filename.length <= maxLength) {
+      return `.../${filename}`;
+    }
+  }
+
+  // 如果文件名也很长，就截断显示
+  const start = url.slice(0, Math.floor(maxLength / 2));
+  const end = url.slice(-Math.floor(maxLength / 2));
+  return `${start}...${end}`;
+}
+
 export function createVideoTaskFormRow(overrides?: Partial<VideoTaskFormRow>): VideoTaskFormRow {
   return {
     id: overrides?.id ?? generateRowId(),
@@ -470,11 +488,18 @@ export function VideoTaskForm({
                     <TableRow key={row.id} className="align-top">
                       <TableCell className="text-center text-sm text-slate-600">{index + 1}</TableCell>
                       <TableCell>
-                        <Input
-                          value={row.imageUrl}
-                          placeholder="/Users/linhao/xxx.png 或 https://example.com/a.png"
-                          onChange={(event) => updateRow(row.id, 'imageUrl', event.target.value)}
-                        />
+                        <div className="flex flex-col gap-1">
+                          <Input
+                            value={row.imageUrl}
+                            placeholder="/Users/linhao/xxx.png 或 https://example.com/a.png"
+                            onChange={(event) => updateRow(row.id, 'imageUrl', event.target.value)}
+                          />
+                          {row.imageUrl && (
+                            <div className="text-xs text-slate-500 truncate" title={row.imageUrl}>
+                              {truncateUrl(row.imageUrl, 60)}
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col gap-2">
@@ -552,16 +577,10 @@ export function VideoTaskForm({
                     </div>
                     <Progress value={item.progress} className="h-1.5" />
                     {item.url ? (
-                      <div className="text-xs">
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 hover:underline truncate block"
-                          title={item.url}
-                        >
-                          {item.url}
-                        </a>
+                      <div className="text-xs" title={item.url}>
+                        <span className="text-slate-500">
+                          {truncateUrl(item.url, 60)}
+                        </span>
                       </div>
                     ) : null}
                     {item.error ? <p className="text-xs text-rose-600">{item.error}</p> : null}
