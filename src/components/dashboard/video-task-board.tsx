@@ -1,21 +1,18 @@
 'use client';
 
-import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Table,
@@ -25,42 +22,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-import { PlusIcon, PencilIcon, Trash2Icon, FilmIcon, PlayCircleIcon, FolderUpIcon } from 'lucide-react';
+import { PlusIcon, PencilIcon, Trash2Icon, FilmIcon, PlayCircleIcon } from 'lucide-react';
 import { api, VideoTask } from '@/lib/api';
 import { cn } from '@/lib/utils';
-
-interface VideoTaskDraft {
-  number?: string;
-  prompt: string;
-  imageUrls: string[];
-  aspectRatio: string;
-  watermark: string;
-  callbackUrl: string;
-  seeds: string;
-  enableFallback: boolean;
-  enableTranslation: boolean;
-}
-
-const aspectRatioOptions = ['16:9', '9:16', '1:1', '4:3'];
-
-interface ImageUploadItem {
-  id: string;
-  name: string;
-  progress: number;
-  status: 'pending' | 'uploading' | 'success' | 'error';
-  url?: string;
-  error?: string;
-}
+import { VideoTaskForm, VideoTaskFormSubmitPayload, VideoTaskFormValues } from './video-task-form';
 
 const STATUS_COLOR: Record<string, string> = {
   等待中: 'bg-slate-100 text-slate-700 border border-slate-200',
@@ -71,44 +39,18 @@ const STATUS_COLOR: Record<string, string> = {
   提交中: 'bg-sky-100 text-sky-700 border border-sky-200',
 };
 
-function createEmptyDraft(defaults?: Partial<VideoTaskDraft>): VideoTaskDraft {
+function mapTaskToFormValues(task: VideoTask): VideoTaskFormValues {
   return {
-    prompt: '',
-    imageUrls: [],
-    aspectRatio: defaults?.aspectRatio ?? '16:9',
-    watermark: defaults?.watermark ?? '',
-    callbackUrl: defaults?.callbackUrl ?? '',
-    seeds: defaults?.seeds ?? '',
-    enableFallback: defaults?.enableFallback ?? false,
-    enableTranslation: defaults?.enableTranslation ?? true,
+    number: task.number,
+    prompt: task.prompt,
+    imageUrls: task.imageUrls,
+    aspectRatio: task.aspectRatio,
+    watermark: task.watermark ?? '',
+    callbackUrl: task.callbackUrl ?? '',
+    seeds: task.seeds ?? '',
+    enableFallback: task.enableFallback,
+    enableTranslation: task.enableTranslation,
   };
-}
-
-function parseImageUrls(raw: string) {
-  return raw
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
-function stringifyImageUrls(urls: string[]) {
-  return urls.join('\n');
-}
-
-function sanitizeSegment(segment: string) {
-  return segment
-    .toLowerCase()
-    .replace(/[^a-z0-9._-]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-}
-
-function sanitizeRelativePath(raw: string) {
-  const parts = raw.split(/[\\/]/).filter(Boolean);
-  return parts
-    .map(sanitizeSegment)
-    .filter(Boolean)
-    .join('/');
 }
 
 export function VideoTaskBoard() {
@@ -124,217 +66,10 @@ export function VideoTaskBoard() {
     },
   });
 
-  const { data: settings } = useQuery({
-    queryKey: ['settings'],
-    queryFn: api.getSettings,
-  });
-
   const videoTasks = useMemo(() => videoData?.videoTasks ?? [], [videoData]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editing, setEditing] = useState<VideoTask | null>(null);
-  const [draft, setDraft] = useState<VideoTaskDraft>(() =>
-    createEmptyDraft({
-      aspectRatio: settings?.videoSettings.defaultAspectRatio,
-      watermark: settings?.videoSettings.defaultWatermark,
-      callbackUrl: settings?.videoSettings.defaultCallback,
-      enableFallback: settings?.videoSettings.enableFallback,
-      enableTranslation: settings?.videoSettings.enableTranslation,
-    }),
-  );
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [imageUploads, setImageUploads] = useState<ImageUploadItem[]>([]);
-  const folderInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    if (folderInputRef.current) {
-      folderInputRef.current.setAttribute('webkitdirectory', '');
-      folderInputRef.current.setAttribute('directory', '');
-    }
-  }, []);
-
-  const uploadFileToR2 = async (
-    file: File,
-    batchPrefix: string,
-    onProgress: (value: number) => void,
-  ): Promise<{ key: string; publicUrl?: string | null; readUrl?: string | null }> => {
-    const contentType = file.type || 'application/octet-stream';
-    const relative = (file as File & { webkitRelativePath?: string }).webkitRelativePath ?? file.name;
-    const trimmed = relative.includes('/') ? relative.split('/').slice(1).join('/') : relative;
-    const sanitized = sanitizeRelativePath(trimmed || file.name) || sanitizeSegment(file.name) || 'image';
-    const key = `${batchPrefix}/${sanitized}`;
-
-    console.log('[VideoTaskBoard] 预签名请求', { key, contentType, size: file.size });
-    const presignResponse = await fetch('/api/r2/presign', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, contentType }),
-    });
-
-    if (!presignResponse.ok) {
-      const message = await presignResponse.text();
-      throw new Error(message || '获取预签名链接失败');
-    }
-
-    const presignData = (await presignResponse.json()) as {
-      url: string;
-      key: string;
-      publicUrl?: string | null;
-    };
-    console.log('[VideoTaskBoard] 预签名成功', presignData);
-
-    await new Promise<void>((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open('PUT', presignData.url, true);
-      xhr.setRequestHeader('Content-Type', contentType);
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const progress = Math.round((event.loaded / event.total) * 100);
-          onProgress(progress);
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status === 200 || xhr.status === 204) {
-          onProgress(100);
-          resolve();
-        } else {
-          reject(new Error(`上传失败 (HTTP ${xhr.status})`));
-        }
-      };
-
-      xhr.onerror = () => {
-        reject(new Error('上传过程中发生错误'));
-      };
-
-      xhr.ontimeout = () => {
-        reject(new Error('上传超时'));
-      };
-
-      xhr.send(file);
-    });
-
-    let readUrl = presignData.publicUrl ?? null;
-    if (!readUrl) {
-      const readResponse = await fetch(`/api/r2/presign-get?key=${encodeURIComponent(presignData.key)}`);
-      if (readResponse.ok) {
-        const readData = (await readResponse.json()) as { url?: string };
-        readUrl = readData.url ?? null;
-      }
-    }
-
-    console.log('[VideoTaskBoard] 单文件上传完成', { key: presignData.key, readUrl, publicUrl: presignData.publicUrl });
-    return { key: presignData.key, publicUrl: presignData.publicUrl, readUrl };
-  };
-
-  const uploadImagesFromFiles = async (files: File[]) => {
-    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
-    if (!imageFiles.length) {
-      toast.error('所选文件夹内没有图片文件');
-      return;
-    }
-
-    const batchPrefix = `uploads/video-references/${Date.now()}`;
-    const batchId = Date.now();
-    const initialStates = imageFiles.map((file, index) => ({
-      id: `${batchId}-${index}`,
-      name: file.name,
-      progress: 0,
-      status: 'pending' as const,
-    }));
-    setImageUploads(initialStates);
-    setIsUploadingImages(true);
-
-    const collectedUrls: string[] = [];
-
-    for (let index = 0; index < imageFiles.length; index += 1) {
-      const file = imageFiles[index];
-      const itemId = initialStates[index].id;
-      setImageUploads((prev) =>
-        prev.map((item) => (item.id === itemId ? { ...item, status: 'uploading', progress: 0 } : item)),
-      );
-
-      try {
-        const result = await uploadFileToR2(file, batchPrefix, (progress) => {
-          setImageUploads((prev) =>
-            prev.map((item) => (item.id === itemId ? { ...item, progress } : item)),
-          );
-        });
-
-        const finalUrl = result.publicUrl ?? result.readUrl;
-        setImageUploads((prev) =>
-          prev.map((item) =>
-            item.id === itemId
-              ? {
-                  ...item,
-                  status: 'success',
-                  progress: 100,
-                  url: finalUrl ?? undefined,
-                }
-              : item,
-          ),
-        );
-
-        if (finalUrl) {
-          collectedUrls.push(finalUrl);
-        }
-      } catch (error) {
-        const message = (error as Error).message || '上传失败';
-        console.error('[VideoTaskBoard] 上传失败', { file: file.name, message });
-        setImageUploads((prev) =>
-          prev.map((item) =>
-            item.id === itemId
-              ? {
-                  ...item,
-                  status: 'error',
-                  error: message,
-                }
-              : item,
-          ),
-        );
-        toast.error(`${file.name}: ${message}`);
-      }
-    }
-
-    if (collectedUrls.length) {
-      setDraft((prev) => {
-        const merged = Array.from(new Set([...prev.imageUrls, ...collectedUrls]));
-        return { ...prev, imageUrls: merged };
-      });
-      toast.success(`已添加 ${collectedUrls.length} 张参考图`);
-    }
-
-    setIsUploadingImages(false);
-  };
-
-  const handleFolderButtonClick = () => {
-    folderInputRef.current?.click();
-  };
-
-  const handleFolderChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const fileList = Array.from(event.target.files ?? []);
-    event.target.value = '';
-    if (!fileList.length) return;
-    uploadImagesFromFiles(fileList);
-  };
-
-  const addTaskMutation = useMutation({
-    mutationFn: (task: Partial<VideoTask> & { prompt: string }) => api.addVideoTask(task),
-    onSuccess: () => {
-      toast.success('已添加视频任务');
-      queryClient.invalidateQueries({ queryKey: ['video-tasks'] });
-      setDialogOpen(false);
-      setDraft(createEmptyDraft({
-        aspectRatio: settings?.videoSettings.defaultAspectRatio,
-        watermark: settings?.videoSettings.defaultWatermark,
-        callbackUrl: settings?.videoSettings.defaultCallback,
-        enableFallback: settings?.videoSettings.enableFallback,
-        enableTranslation: settings?.videoSettings.enableTranslation,
-      }));
-    },
-    onError: (error: Error) => toast.error(error.message || '添加视频任务失败'),
-  });
 
   const updateTaskMutation = useMutation({
     mutationFn: ({ number, payload }: { number: string; payload: Partial<VideoTask> }) =>
@@ -342,7 +77,7 @@ export function VideoTaskBoard() {
     onSuccess: () => {
       toast.success('视频任务已更新');
       queryClient.invalidateQueries({ queryKey: ['video-tasks'] });
-      setDialogOpen(false);
+      setEditDialogOpen(false);
       setEditing(null);
     },
     onError: (error: Error) => toast.error(error.message || '更新视频任务失败'),
@@ -405,22 +140,6 @@ export function VideoTaskBoard() {
     });
   };
 
-  const openCreateDialog = () => {
-    setEditing(null);
-    setDraft(
-      createEmptyDraft({
-        aspectRatio: settings?.videoSettings.defaultAspectRatio,
-        watermark: settings?.videoSettings.defaultWatermark,
-        callbackUrl: settings?.videoSettings.defaultCallback,
-        enableFallback: settings?.videoSettings.enableFallback,
-        enableTranslation: settings?.videoSettings.enableTranslation,
-      }),
-    );
-    setImageUploads([]);
-    setIsUploadingImages(false);
-    setDialogOpen(true);
-  };
-
   const openEditDialog = () => {
     if (!selected.size) {
       toast.warning('请先选择要编辑的任务');
@@ -434,42 +153,18 @@ export function VideoTaskBoard() {
     const task = videoTasks.find((item) => item.number === number);
     if (!task) return;
     setEditing(task);
-    setDraft({
-      number: task.number,
-      prompt: task.prompt,
-      imageUrls: task.imageUrls,
-      aspectRatio: task.aspectRatio,
-      watermark: task.watermark ?? '',
-      callbackUrl: task.callbackUrl ?? '',
-      seeds: task.seeds ?? '',
-      enableFallback: task.enableFallback,
-      enableTranslation: task.enableTranslation,
-    });
-    setImageUploads([]);
-    setIsUploadingImages(false);
-    setDialogOpen(true);
+    setEditDialogOpen(true);
   };
 
-  const handleSubmit = () => {
-    if (!draft.prompt.trim()) {
-      toast.error('请填写视频提示词');
-      return;
-    }
-    const payload = {
-      prompt: draft.prompt.trim(),
-      imageUrls: draft.imageUrls,
-      aspectRatio: draft.aspectRatio,
-      watermark: draft.watermark,
-      callbackUrl: draft.callbackUrl,
-      seeds: draft.seeds,
-      enableFallback: draft.enableFallback,
-      enableTranslation: draft.enableTranslation,
-    };
+  const handleEditSubmit = (payload: VideoTaskFormSubmitPayload) => {
+    if (!editing) return;
+    updateTaskMutation.mutate({ number: editing.number, payload });
+  };
 
-    if (editing) {
-      updateTaskMutation.mutate({ number: editing.number, payload });
-    } else {
-      addTaskMutation.mutate(payload);
+  const handleDialogChange = (open: boolean) => {
+    setEditDialogOpen(open);
+    if (!open) {
+      setEditing(null);
     }
   };
 
@@ -500,8 +195,10 @@ export function VideoTaskBoard() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" size="sm" onClick={openCreateDialog}>
-            <PlusIcon className="mr-2 h-4 w-4" /> 添加任务
+          <Button variant="secondary" size="sm" asChild>
+            <Link href="/video/create">
+              <PlusIcon className="mr-2 h-4 w-4" /> 添加任务
+            </Link>
           </Button>
           <Button variant="secondary" size="sm" onClick={openEditDialog} disabled={!selected.size}>
             <PencilIcon className="mr-2 h-4 w-4" /> 编辑选中
@@ -676,224 +373,23 @@ export function VideoTaskBoard() {
         </ScrollArea>
       </CardContent>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={editDialogOpen} onOpenChange={handleDialogChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>{editing ? `编辑视频任务 #${editing.number}` : '添加视频任务'}</DialogTitle>
-            <DialogDescription>将提示词与参考图 URL 发送至 Veo3 视频生成接口。</DialogDescription>
+            <DialogTitle>
+              {editing ? `编辑视频任务 #${editing.number}` : '编辑视频任务'}
+            </DialogTitle>
+            <DialogDescription>调整提示词或参考图，更新 Veo3 视频任务。</DialogDescription>
           </DialogHeader>
-          <input
-            ref={folderInputRef}
-            type="file"
-            multiple
-            accept="image/*"
-            className="hidden"
-            onChange={handleFolderChange}
-          />
-          <div className="grid gap-4 md:grid-cols-2 overflow-y-auto flex-1">
-            <div className="md:col-span-2 space-y-2">
-              <Label htmlFor="video-prompt">视频提示词</Label>
-              <Textarea
-                id="video-prompt"
-                rows={6}
-                value={draft.prompt}
-                onChange={(event) => setDraft((prev) => ({ ...prev, prompt: event.target.value }))}
-                placeholder="请输入适用于 Veo3 的视频提示词..."
-              />
-            </div>
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="video-images">参考图 URL（每行一个，可选）</Label>
-                <div className="space-y-2 rounded-md border border-slate-200 bg-white p-3 max-h-40 overflow-y-auto">
-                  {draft.imageUrls.length > 0 ? (
-                    draft.imageUrls.map((url, idx) => (
-                      <div key={idx} className="flex items-center gap-2 text-xs group">
-                        <span className="text-slate-500 shrink-0">{idx + 1}.</span>
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 hover:underline truncate flex-1"
-                          title={url}
-                        >
-                          {url}
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setDraft((prev) => ({
-                              ...prev,
-                              imageUrls: prev.imageUrls.filter((_, i) => i !== idx),
-                            }));
-                          }}
-                          className="text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-xs text-slate-400 text-center py-2">暂无参考图，请上传文件夹或手动粘贴 URL</p>
-                  )}
-                </div>
-                <Textarea
-                  id="video-images"
-                  rows={2}
-                  value=""
-                  onChange={(event) => {
-                    const newUrls = parseImageUrls(event.target.value);
-                    if (newUrls.length > 0) {
-                      setDraft((prev) => ({
-                        ...prev,
-                        imageUrls: Array.from(new Set([...prev.imageUrls, ...newUrls])),
-                      }));
-                      event.target.value = '';
-                    }
-                  }}
-                  placeholder="粘贴 URL 后自动添加，支持多行..."
-                  className="text-xs"
-                />
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleFolderButtonClick}
-                  disabled={isUploadingImages}
-                >
-                  <FolderUpIcon className="mr-2 h-4 w-4" /> 上传参考图文件夹
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  选择包含图片的文件夹，系统将自动上传并填入 URL。
-                  {isUploadingImages ? ' 正在上传...' : ''}
-                </span>
-              </div>
-              {imageUploads.length > 0 && (
-                <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3 max-h-48 overflow-y-auto">
-                  {imageUploads.map((item) => (
-                    <div key={item.id} className="space-y-2">
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                        <span className="font-medium text-slate-700 truncate max-w-[200px]" title={item.name}>{item.name}</span>
-                        <span
-                          className={cn(
-                            'whitespace-nowrap rounded px-1.5 py-0.5 font-medium',
-                            item.status === 'success'
-                              ? 'bg-emerald-100 text-emerald-700'
-                              : item.status === 'error'
-                                ? 'bg-rose-100 text-rose-700'
-                                : 'bg-sky-100 text-sky-700',
-                          )}
-                        >
-                          {item.status === 'success'
-                            ? '成功'
-                            : item.status === 'error'
-                              ? '失败'
-                              : '上传中'}
-                        </span>
-                      </div>
-                      <Progress value={item.progress} className="h-1.5" />
-                      {item.url ? (
-                        <div className="text-xs">
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-600 hover:underline truncate block"
-                            title={item.url}
-                          >
-                            {item.url}
-                          </a>
-                        </div>
-                      ) : null}
-                      {item.error ? (
-                        <p className="text-xs text-rose-600">{item.error}</p>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label>画幅比例</Label>
-              <Select
-                value={draft.aspectRatio}
-                onValueChange={(value) => setDraft((prev) => ({ ...prev, aspectRatio: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="选择画幅" />
-                </SelectTrigger>
-                <SelectContent>
-                  {aspectRatioOptions.map((ratio) => (
-                    <SelectItem key={ratio} value={ratio}>
-                      {ratio}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="video-watermark">水印（可选）</Label>
-              <Input
-                id="video-watermark"
-                value={draft.watermark}
-                onChange={(event) => setDraft((prev) => ({ ...prev, watermark: event.target.value }))}
-                placeholder="例如：MyBrand"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="video-callback">回调地址（可选）</Label>
-              <Input
-                id="video-callback"
-                value={draft.callbackUrl}
-                onChange={(event) => setDraft((prev) => ({ ...prev, callbackUrl: event.target.value }))}
-                placeholder="https://your-domain.com/callback"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="video-seeds">随机种子（可选）</Label>
-              <Input
-                id="video-seeds"
-                value={draft.seeds}
-                onChange={(event) => setDraft((prev) => ({ ...prev, seeds: event.target.value }))}
-                placeholder="例如：12345"
-              />
-            </div>
-            <div className="space-y-4 md:col-span-2">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="video-fallback"
-                  checked={draft.enableFallback}
-                  onCheckedChange={(checked) =>
-                    setDraft((prev) => ({ ...prev, enableFallback: Boolean(checked) }))
-                  }
-                />
-                <Label htmlFor="video-fallback" className="text-sm text-muted-foreground">
-                  启用备用模型 (enableFallback)
-                </Label>
-              </div>
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="video-translation"
-                  checked={draft.enableTranslation}
-                  onCheckedChange={(checked) =>
-                    setDraft((prev) => ({ ...prev, enableTranslation: Boolean(checked) }))
-                  }
-                />
-                <Label htmlFor="video-translation" className="text-sm text-muted-foreground">
-                  启用提示词翻译 (enableTranslation)
-                </Label>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={handleSubmit} disabled={!draft.prompt.trim()}>
-              {editing ? '更新任务' : '保存任务'}
-            </Button>
-          </DialogFooter>
+          {editing ? (
+            <VideoTaskForm
+              mode="edit"
+              initialValues={mapTaskToFormValues(editing)}
+              onSubmit={handleEditSubmit}
+              onCancel={() => handleDialogChange(false)}
+              isSubmitting={updateTaskMutation.isPending}
+            />
+          ) : null}
         </DialogContent>
       </Dialog>
     </Card>

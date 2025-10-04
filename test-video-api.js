@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 const axios = require('axios');
 
 const API_KEY = 'a0d601be40ab985e269fa28916b1d724';
