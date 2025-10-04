@@ -148,6 +148,7 @@ export function VideoTaskForm({
   disableUpload,
 }: VideoTaskFormProps) {
   const folderInputRef = useRef<HTMLInputElement | null>(null);
+  const singleImageInputRef = useRef<HTMLInputElement | null>(null);
   const [values, setValues] = useState<VideoTaskFormValues>(() => ({
     ...initialValues,
     rows: initialValues.rows.length ? initialValues.rows.map(createVideoTaskFormRow) : [createVideoTaskFormRow()],
@@ -383,6 +384,17 @@ export function VideoTaskForm({
     void uploadImagesFromFiles(fileList);
   };
 
+  const handleSingleImageButtonClick = () => {
+    singleImageInputRef.current?.click();
+  };
+
+  const handleSingleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const fileList = Array.from(event.target.files ?? []);
+    event.target.value = '';
+    if (!fileList.length) return;
+    void uploadImagesFromFiles(fileList);
+  };
+
   const handleBulkAdd = () => {
     const parsed = parseBulkInput(bulkInput);
     if (!parsed.length) {
@@ -450,6 +462,14 @@ export function VideoTaskForm({
         onChange={handleFolderChange}
         disabled={disableUpload}
       />
+      <input
+        ref={singleImageInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleSingleImageChange}
+        disabled={disableUpload}
+      />
       <ScrollArea className="flex-1 pr-4">
         <div className="space-y-6">
           <div className="space-y-3">
@@ -465,8 +485,14 @@ export function VideoTaskForm({
                 >
                   <FolderUpIcon className="mr-2 h-4 w-4" /> 上传参考图文件夹
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => addRow()}>
-                  <PlusIcon className="mr-2 h-4 w-4" /> 添加空行
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSingleImageButtonClick}
+                  disabled={disableUpload || isUploadingImages}
+                >
+                  <PlusIcon className="mr-2 h-4 w-4" /> 添加单张图片
                 </Button>
               </div>
             </div>
