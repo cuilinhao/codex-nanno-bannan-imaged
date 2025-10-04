@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useEffect, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,12 +9,36 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { FolderUpIcon } from 'lucide-react';
+import { FolderUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+
+export interface VideoTaskFormRow {
+  id: string;
+  imageUrl: string;
+  prompt: string;
+}
 
 export interface VideoTaskFormValues {
   number?: string;
+  rows: VideoTaskFormRow[];
+  aspectRatio: string;
+  watermark: string;
+  callbackUrl: string;
+  seeds: string;
+  enableFallback: boolean;
+  enableTranslation: boolean;
+}
+
+export interface VideoTaskFormSubmitPayload {
   prompt: string;
   imageUrls: string[];
   aspectRatio: string;
@@ -24,8 +48,6 @@ export interface VideoTaskFormValues {
   enableFallback: boolean;
   enableTranslation: boolean;
 }
-
-export type VideoTaskFormSubmitPayload = Omit<VideoTaskFormValues, 'number'>;
 
 interface VideoTaskFormProps {
   mode: 'create' | 'edit';
@@ -49,10 +71,22 @@ interface ImageUploadItem {
 
 const ASPECT_RATIO_OPTIONS = ['16:9', '9:16', '1:1', '4:3'];
 
-export function createEmptyVideoTaskDraft(defaults?: Partial<VideoTaskFormValues>): VideoTaskFormValues {
+function generateRowId() {
+  return `row-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+export function createVideoTaskFormRow(overrides?: Partial<VideoTaskFormRow>): VideoTaskFormRow {
   return {
-    prompt: '',
-    imageUrls: [],
+    id: overrides?.id ?? generateRowId(),
+    imageUrl: overrides?.imageUrl ?? '',
+    prompt: overrides?.prompt ?? '',
+  };
+}
+
+export function createEmptyVideoTaskDraft(defaults?: Partial<VideoTaskFormValues>): VideoTaskFormValues {
+  const providedRows = defaults?.rows?.length ? defaults.rows.map(createVideoTaskFormRow) : undefined;
+  return {
+    rows: providedRows ?? [createVideoTaskFormRow()],
     aspectRatio: defaults?.aspectRatio ?? '16:9',
     watermark: defaults?.watermark ?? '',
     callbackUrl: defaults?.callbackUrl ?? '',
@@ -62,10 +96,10 @@ export function createEmptyVideoTaskDraft(defaults?: Partial<VideoTaskFormValues
   };
 }
 
-function parseImageUrls(raw: string) {
+function parseBulkInput(raw: string) {
   return raw
     .split(/\r?\n/)
-    .map((item) => item.trim())
+    .map((line) => line.trim())
     .filter(Boolean);
 }
 
@@ -96,9 +130,13 @@ export function VideoTaskForm({
   disableUpload,
 }: VideoTaskFormProps) {
   const folderInputRef = useRef<HTMLInputElement | null>(null);
-  const [values, setValues] = useState<VideoTaskFormValues>(() => ({ ...initialValues }));
+  const [values, setValues] = useState<VideoTaskFormValues>(() => ({
+    ...initialValues,
+    rows: initialValues.rows.length ? initialValues.rows.map(createVideoTaskFormRow) : [createVideoTaskFormRow()],
+  }));
   const [imageUploads, setImageUploads] = useState<ImageUploadItem[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [bulkInput, setBulkInput] = useState('');
 
   useEffect(() => {
     if (folderInputRef.current) {
@@ -108,10 +146,61 @@ export function VideoTaskForm({
   }, []);
 
   useEffect(() => {
-    setValues({ ...initialValues });
+    setValues({
+      ...initialValues,
+      rows: initialValues.rows.length ? initialValues.rows.map(createVideoTaskFormRow) : [createVideoTaskFormRow()],
+    });
     setImageUploads([]);
     setIsUploadingImages(false);
+    setBulkInput('');
   }, [initialValues]);
+
+  const rows = useMemo(() => values.rows, [values.rows]);
+
+  const updateRow = (id: string, key: 'imageUrl' | 'prompt', value: string) => {
+    setValues((prev) => ({
+      ...prev,
+      rows: prev.rows.map((row) => (row.id === id ? { ...row, [key]: value } : row)),
+    }));
+  };
+
+  const addRow = (row?: Partial<VideoTaskFormRow>) => {
+    setValues((prev) => ({
+      ...prev,
+      rows: [...prev.rows, createVideoTaskFormRow(row)],
+    }));
+  };
+
+  const removeRow = (id: string) => {
+    setValues((prev) => {
+      const nextRows = prev.rows.filter((row) => row.id !== id);
+      if (nextRows.length === 0) {
+        return { ...prev, rows: [createVideoTaskFormRow()] };
+      }
+      return { ...prev, rows: nextRows };
+    });
+  };
+
+  const addRowsFromUrls = (urls: string[]) => {
+    setValues((prev) => {
+      if (!urls.length) return prev;
+      const existingUrls = new Set(prev.rows.map((row) => row.imageUrl).filter(Boolean));
+      const pendingUrls = urls.filter((url) => !existingUrls.has(url));
+      if (!pendingUrls.length) return prev;
+
+      const nextRows = [...prev.rows];
+      pendingUrls.forEach((url) => {
+        const targetIndex = nextRows.findIndex((row) => !row.imageUrl.trim());
+        if (targetIndex !== -1) {
+          nextRows[targetIndex] = { ...nextRows[targetIndex], imageUrl: url };
+        } else {
+          nextRows.push(createVideoTaskFormRow({ imageUrl: url }));
+        }
+      });
+
+      return { ...prev, rows: nextRows };
+    });
+  };
 
   const uploadFileToR2 = async (
     file: File,
@@ -258,10 +347,7 @@ export function VideoTaskForm({
     }
 
     if (collectedUrls.length) {
-      setValues((prev) => {
-        const merged = Array.from(new Set([...prev.imageUrls, ...collectedUrls]));
-        return { ...prev, imageUrls: merged };
-      });
+      addRowsFromUrls(collectedUrls);
       toast.success(`已添加 ${collectedUrls.length} 张参考图`);
     }
 
@@ -279,15 +365,51 @@ export function VideoTaskForm({
     void uploadImagesFromFiles(fileList);
   };
 
+  const handleBulkAdd = () => {
+    const parsed = parseBulkInput(bulkInput);
+    if (!parsed.length) {
+      toast.info('请输入至少一个图片路径');
+      return;
+    }
+    addRowsFromUrls(parsed);
+    setBulkInput('');
+    toast.success(`已添加 ${parsed.length} 条路径`);
+  };
+
   const handleSubmit = () => {
-    if (!values.prompt.trim()) {
-      toast.error('请填写视频提示词');
+    const trimmedRows = rows
+      .map((row) => ({
+        id: row.id,
+        imageUrl: row.imageUrl.trim(),
+        prompt: row.prompt.trim(),
+      }))
+      .filter((row) => row.imageUrl || row.prompt);
+
+    if (!trimmedRows.length) {
+      toast.error('请添加至少一行图片与提示词');
       return;
     }
 
+    const hasEmptyImage = trimmedRows.some((row) => !row.imageUrl);
+    if (hasEmptyImage) {
+      toast.error('图片路径不能为空');
+      return;
+    }
+
+    const hasEmptyPrompt = trimmedRows.some((row) => !row.prompt);
+    if (hasEmptyPrompt) {
+      toast.error('请为每张图片填写提示词');
+      return;
+    }
+
+    const combinedPrompt =
+      trimmedRows.length === 1
+        ? trimmedRows[0].prompt
+        : trimmedRows.map((row, index) => `${index + 1}. ${row.prompt}`).join('\n');
+
     const payload: VideoTaskFormSubmitPayload = {
-      prompt: values.prompt.trim(),
-      imageUrls: values.imageUrls,
+      prompt: combinedPrompt,
+      imageUrls: trimmedRows.map((row) => row.imageUrl),
       aspectRatio: values.aspectRatio,
       watermark: values.watermark,
       callbackUrl: values.callbackUrl,
@@ -311,92 +433,108 @@ export function VideoTaskForm({
         disabled={disableUpload}
       />
       <ScrollArea className="flex-1 pr-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="md:col-span-2 space-y-2">
-            <Label htmlFor="video-prompt">视频提示词</Label>
-            <Textarea
-              id="video-prompt"
-              rows={6}
-              value={values.prompt}
-              onChange={(event) => setValues((prev) => ({ ...prev, prompt: event.target.value }))}
-              placeholder="请输入适用于 Veo3 的视频提示词..."
-            />
-          </div>
+        <div className="space-y-6">
           <div className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="video-images">参考图 URL（每行一个，可选）</Label>
-              <div className="space-y-2 rounded-md border border-slate-200 bg-white p-3 max-h-40 overflow-y-auto">
-                {values.imageUrls.length > 0 ? (
-                  values.imageUrls.map((url, idx) => (
-                    <div key={idx} className="flex items-center gap-2 text-xs group">
-                      <span className="text-slate-500 shrink-0">{idx + 1}.</span>
-                      <a
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 hover:underline truncate flex-1"
-                        title={url}
-                      >
-                        {url}
-                      </a>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setValues((prev) => ({
-                            ...prev,
-                            imageUrls: prev.imageUrls.filter((_, i) => i !== idx),
-                          }));
-                        }}
-                        className="text-rose-500 hover:text-rose-700 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-slate-400 text-center py-2">暂无参考图，请上传文件夹或手动粘贴 URL</p>
-                )}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Label className="text-base font-semibold">参考图与提示词</Label>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFolderButtonClick}
+                  disabled={disableUpload || isUploadingImages}
+                >
+                  <FolderUpIcon className="mr-2 h-4 w-4" /> 上传参考图文件夹
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addRow()}>
+                  <PlusIcon className="mr-2 h-4 w-4" /> 添加空行
+                </Button>
               </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              一行对应一张参考图与提示词，支持本地路径或在线 URL。
+            </p>
+
+            <div className="rounded-md border border-slate-200">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-slate-50">
+                    <TableHead className="w-16 text-center">序号</TableHead>
+                    <TableHead className="w-[40%]">图片路径</TableHead>
+                    <TableHead>提示词</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row, index) => (
+                    <TableRow key={row.id} className="align-top">
+                      <TableCell className="text-center text-sm text-slate-600">{index + 1}</TableCell>
+                      <TableCell>
+                        <Input
+                          value={row.imageUrl}
+                          placeholder="/Users/linhao/xxx.png 或 https://example.com/a.png"
+                          onChange={(event) => updateRow(row.id, 'imageUrl', event.target.value)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-2">
+                          <Textarea
+                            value={row.prompt}
+                            placeholder="请输入该图片对应的提示词"
+                            rows={3}
+                            onChange={(event) => updateRow(row.id, 'prompt', event.target.value)}
+                          />
+                          <div className="flex justify-end">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="text-rose-600 hover:text-rose-700"
+                              onClick={() => removeRow(row.id)}
+                              disabled={rows.length === 1}
+                            >
+                              <Trash2Icon className="mr-2 h-4 w-4" /> 删除行
+                            </Button>
+                          </div>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="grid gap-2 md:grid-cols-[1fr_auto]">
               <Textarea
-                id="video-images"
-                rows={2}
-                value=""
-                onChange={(event) => {
-                  const newUrls = parseImageUrls(event.target.value);
-                  if (newUrls.length > 0) {
-                    setValues((prev) => ({
-                      ...prev,
-                      imageUrls: Array.from(new Set([...prev.imageUrls, ...newUrls])),
-                    }));
-                    event.target.value = '';
-                  }
-                }}
-                placeholder="粘贴 URL 后自动添加，支持多行..."
-                className="text-xs"
-                disabled={disableUpload}
+                value={bulkInput}
+                onChange={(event) => setBulkInput(event.target.value)}
+                placeholder="批量粘贴图片路径，每行一条。"
+                rows={3}
               />
+              <div className="flex items-start gap-2 md:flex-col">
+                <Button type="button" variant="secondary" onClick={handleBulkAdd} className="md:w-full">
+                  批量添加
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setBulkInput('')}
+                  className="text-slate-500 hover:text-slate-700 md:w-full"
+                >
+                  清空输入
+                </Button>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleFolderButtonClick}
-                disabled={disableUpload || isUploadingImages}
-              >
-                <FolderUpIcon className="mr-2 h-4 w-4" /> 上传参考图文件夹
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                选择包含图片的文件夹，系统将自动上传并填入 URL。
-                {isUploadingImages ? ' 正在上传...' : ''}
-              </span>
-            </div>
-            {imageUploads.length > 0 && (
-              <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3 max-h-48 overflow-y-auto">
+          </div>
+
+          {imageUploads.length > 0 && (
+            <div className="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs font-medium text-slate-600">上传进度</p>
+              <div className="space-y-3 max-h-48 overflow-y-auto">
                 {imageUploads.map((item) => (
                   <div key={item.id} className="space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-                      <span className="font-medium text-slate-700 truncate max-w-[200px]" title={item.name}>
+                      <span className="font-medium text-slate-700 truncate max-w-[240px]" title={item.name}>
                         {item.name}
                       </span>
                       <span
@@ -430,60 +568,87 @@ export function VideoTaskForm({
                   </div>
                 ))}
               </div>
-            )}
+            </div>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>画幅比例</Label>
+              <Select
+                value={values.aspectRatio}
+                onValueChange={(value) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    aspectRatio: value,
+                  }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="选择画幅" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASPECT_RATIO_OPTIONS.map((ratio) => (
+                    <SelectItem key={ratio} value={ratio}>
+                      {ratio}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="video-watermark">水印（可选）</Label>
+              <Input
+                id="video-watermark"
+                value={values.watermark}
+                onChange={(event) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    watermark: event.target.value,
+                  }))
+                }
+                placeholder="例如：MyBrand"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="video-callback">回调地址（可选）</Label>
+              <Input
+                id="video-callback"
+                value={values.callbackUrl}
+                onChange={(event) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    callbackUrl: event.target.value,
+                  }))
+                }
+                placeholder="https://your-domain.com/callback"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="video-seeds">随机种子（可选）</Label>
+              <Input
+                id="video-seeds"
+                value={values.seeds}
+                onChange={(event) =>
+                  setValues((prev) => ({
+                    ...prev,
+                    seeds: event.target.value,
+                  }))
+                }
+                placeholder="例如：12345"
+              />
+            </div>
           </div>
-          <div className="space-y-2">
-            <Label>画幅比例</Label>
-            <Select
-              value={values.aspectRatio}
-              onValueChange={(value) => setValues((prev) => ({ ...prev, aspectRatio: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="选择画幅" />
-              </SelectTrigger>
-              <SelectContent>
-                {ASPECT_RATIO_OPTIONS.map((ratio) => (
-                  <SelectItem key={ratio} value={ratio}>
-                    {ratio}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="video-watermark">水印（可选）</Label>
-            <Input
-              id="video-watermark"
-              value={values.watermark}
-              onChange={(event) => setValues((prev) => ({ ...prev, watermark: event.target.value }))}
-              placeholder="例如：MyBrand"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="video-callback">回调地址（可选）</Label>
-            <Input
-              id="video-callback"
-              value={values.callbackUrl}
-              onChange={(event) => setValues((prev) => ({ ...prev, callbackUrl: event.target.value }))}
-              placeholder="https://your-domain.com/callback"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="video-seeds">随机种子（可选）</Label>
-            <Input
-              id="video-seeds"
-              value={values.seeds}
-              onChange={(event) => setValues((prev) => ({ ...prev, seeds: event.target.value }))}
-              placeholder="例如：12345"
-            />
-          </div>
-          <div className="space-y-4 md:col-span-2">
+
+          <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Checkbox
                 id="video-fallback"
                 checked={values.enableFallback}
                 onCheckedChange={(checked) =>
-                  setValues((prev) => ({ ...prev, enableFallback: Boolean(checked) }))
+                  setValues((prev) => ({
+                    ...prev,
+                    enableFallback: Boolean(checked),
+                  }))
                 }
               />
               <Label htmlFor="video-fallback" className="text-sm text-muted-foreground">
@@ -495,7 +660,10 @@ export function VideoTaskForm({
                 id="video-translation"
                 checked={values.enableTranslation}
                 onCheckedChange={(checked) =>
-                  setValues((prev) => ({ ...prev, enableTranslation: Boolean(checked) }))
+                  setValues((prev) => ({
+                    ...prev,
+                    enableTranslation: Boolean(checked),
+                  }))
                 }
               />
               <Label htmlFor="video-translation" className="text-sm text-muted-foreground">
@@ -511,7 +679,7 @@ export function VideoTaskForm({
             {cancelLabel ?? '取消'}
           </Button>
         ) : null}
-        <Button onClick={handleSubmit} disabled={isSubmitting || !values.prompt.trim()}>
+        <Button onClick={handleSubmit} disabled={isSubmitting}>
           {isSubmitting ? '提交中...' : submitLabel ?? (mode === 'edit' ? '更新任务' : '保存任务')}
         </Button>
       </div>

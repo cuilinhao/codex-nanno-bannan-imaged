@@ -28,7 +28,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { PlusIcon, PencilIcon, Trash2Icon, FilmIcon, PlayCircleIcon } from 'lucide-react';
 import { api, VideoTask } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import { VideoTaskForm, VideoTaskFormSubmitPayload, VideoTaskFormValues } from './video-task-form';
+import {
+  VideoTaskForm,
+  VideoTaskFormSubmitPayload,
+  VideoTaskFormValues,
+  createVideoTaskFormRow,
+} from './video-task-form';
 
 const STATUS_COLOR: Record<string, string> = {
   等待中: 'bg-slate-100 text-slate-700 border border-slate-200',
@@ -40,10 +45,33 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 function mapTaskToFormValues(task: VideoTask): VideoTaskFormValues {
+  const promptLines = task.prompt
+    ? task.prompt
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean)
+    : [];
+
+  const rows = task.imageUrls.length
+    ? task.imageUrls.map((url, index) => {
+        const sourceLine = promptLines[index] ?? (promptLines.length === 1 ? promptLines[0] : task.prompt) ?? '';
+        const normalizedPrompt = sourceLine.replace(/^\d+\.\s*/, '').trim();
+        return createVideoTaskFormRow({
+          id: `task-${task.number}-${index}`,
+          imageUrl: url,
+          prompt: normalizedPrompt,
+        });
+      })
+    : [
+        createVideoTaskFormRow({
+          id: `task-${task.number}-0`,
+          prompt: task.prompt,
+        }),
+      ];
+
   return {
     number: task.number,
-    prompt: task.prompt,
-    imageUrls: task.imageUrls,
+    rows,
     aspectRatio: task.aspectRatio,
     watermark: task.watermark ?? '',
     callbackUrl: task.callbackUrl ?? '',
