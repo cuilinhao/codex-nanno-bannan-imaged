@@ -426,16 +426,26 @@ export function VideoTaskForm({
       return;
     }
 
-    const hasEmptyPrompt = trimmedRows.some((row) => !row.prompt);
-    if (hasEmptyPrompt) {
-      toast.error('请为每张图片填写提示词');
+    // 检查是否所有行都有提示词
+    const allHavePrompts = trimmedRows.every((row) => row.prompt);
+    const someHavePrompts = trimmedRows.some((row) => row.prompt);
+
+    if (!someHavePrompts) {
+      toast.error('请至少填写一个提示词');
       return;
     }
 
+    // 如果有部分行没有提示词，使用第一个有提示词的行作为默认值
+    const defaultPrompt = trimmedRows.find((row) => row.prompt)?.prompt || '';
+    const normalizedRows = trimmedRows.map((row) => ({
+      ...row,
+      prompt: row.prompt || defaultPrompt,
+    }));
+
     const combinedPrompt =
-      trimmedRows.length === 1
-        ? trimmedRows[0].prompt
-        : trimmedRows.map((row, index) => `${index + 1}. ${row.prompt}`).join('\n');
+      normalizedRows.length === 1
+        ? normalizedRows[0].prompt
+        : normalizedRows.map((row, index) => `${index + 1}. ${row.prompt}`).join('\n');
 
     const payload: VideoTaskFormSubmitPayload = {
       prompt: combinedPrompt,
