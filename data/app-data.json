@@ -202,9 +202,11 @@
       "seeds": "",
       "enableFallback": false,
       "enableTranslation": true,
-      "status": "等待中",
-      "progress": 0,
-      "createdAt": "2025-10-05T08:27:01.475Z"
+      "status": "失败",
+      "progress": 17,
+      "createdAt": "2025-10-05T08:27:01.475Z",
+      "updatedAt": "2025-10-05T08:45:17.199Z",
+      "errorMsg": "Image fetch failed. Check access settings or use our File Upload API instead."
     },
     {
       "number": "2",
@@ -218,25 +220,11 @@
       "seeds": "",
       "enableFallback": false,
       "enableTranslation": true,
-      "status": "等待中",
-      "progress": 0,
-      "createdAt": "2025-10-05T08:27:01.727Z"
-    },
-    {
-      "number": "3",
-      "prompt": "跳舞收到回复交电话费比较束带结发很快就收到货发卡机打撒康师傅克里斯丁荆防颗粒受跳舞收到回复交电话费比较束带结发很快就收到货发卡机打撒康师傅克里斯丁荆防颗粒受打击发啦扩大时打击发啦扩大时",
-      "imageUrls": [
-        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759652644161/aaa.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T082408Z&X-Amz-Expires=300&X-Amz-Signature=822a7c46086796e59822b10d777b813ac28582b1ea58448ceae23cc80f2bdf1b&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
-      ],
-      "aspectRatio": "16:9",
-      "watermark": "",
-      "callbackUrl": "",
-      "seeds": "",
-      "enableFallback": false,
-      "enableTranslation": true,
-      "status": "等待中",
-      "progress": 0,
-      "createdAt": "2025-10-05T08:27:01.951Z"
+      "status": "失败",
+      "progress": 15,
+      "createdAt": "2025-10-05T08:27:01.727Z",
+      "errorMsg": "Image fetch failed. Check access settings or use our File Upload API instead.",
+      "updatedAt": "2025-10-05T08:45:10.414Z"
     }
   ],
   "generatedImages": {},

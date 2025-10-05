@@ -157,7 +157,7 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
     prompt: task.prompt,
     imageUrls: task.imageUrls ?? [],
     model: 'veo3_fast',
-    aspectRatio: task.aspectRatio ?? '16:9',
+    aspectRatio: task.aspectRatio ?? '9:16',
     enableFallback: Boolean(task.enableFallback),
     enableTranslation: task.enableTranslation !== false,
   };

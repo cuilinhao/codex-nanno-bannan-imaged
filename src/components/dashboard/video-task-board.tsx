@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { ChangeEvent, KeyboardEvent, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { Trash2Icon, FilmIcon, PlayCircleIcon } from 'lucide-react';
 import { api, VideoTask } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -53,6 +54,32 @@ function getDisplayValue(raw?: string | null) {
   return name || raw;
 }
 
+function getDirectoryPath(raw?: string | null) {
+  if (!raw) return '';
+  const normalized = raw.replace(/\\/g, '/');
+  const segments = normalized.split('/');
+  segments.pop();
+  return segments.join('/');
+}
+
+function extractDirectoryFromFile(file: File & { path?: string; webkitRelativePath?: string }) {
+  if (file.path) {
+    const normalized = file.path.replace(/\\/g, '/');
+    const segments = normalized.split('/');
+    segments.pop();
+    return segments.join('/');
+  }
+
+  if (file.webkitRelativePath) {
+    const normalized = file.webkitRelativePath.replace(/\\/g, '/');
+    const segments = normalized.split('/');
+    segments.pop();
+    return segments.join('/');
+  }
+
+  return '';
+}
+
 export function VideoTaskBoard() {
   const queryClient = useQueryClient();
   const { data: videoData, isLoading } = useQuery({
@@ -73,6 +100,16 @@ export function VideoTaskBoard() {
 
   const videoTasks = useMemo(() => videoData?.videoTasks ?? [], [videoData]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [editingPrompt, setEditingPrompt] = useState<
+    | {
+        number: string;
+        value: string;
+        original: string;
+      }
+    | null
+  >(null);
+  const promptCancelRef = useRef(false);
+  const outputFolderInputRef = useRef<HTMLInputElement | null>(null);
 
   const initialFormValues = useMemo(
     () =>
@@ -158,6 +195,27 @@ export function VideoTaskBoard() {
     onError: (error: Error) => toast.error(error.message || '启动图生视频失败'),
   });
 
+  const updatePromptMutation = useMutation({
+    mutationFn: ({ number, prompt }: { number: string; prompt: string }) =>
+      api.updateVideoTask(number, { prompt }),
+    onSuccess: async () => {
+      toast.success('提示词已更新');
+      setEditingPrompt(null);
+      promptCancelRef.current = false;
+      await queryClient.invalidateQueries({ queryKey: ['video-tasks'] });
+    },
+    onError: (error: Error) => toast.error(error.message || '更新提示词失败'),
+  });
+
+  const updateSavePathMutation = useMutation({
+    mutationFn: (savePath: string) => api.updateSettings({ videoSettings: { savePath } }),
+    onSuccess: async (_, savePath) => {
+      toast.success(`已更新视频存储路径：${savePath}`);
+      await queryClient.invalidateQueries({ queryKey: ['settings'] });
+    },
+    onError: (error: Error) => toast.error(error.message || '更新存储路径失败'),
+  });
+
   const sortedTasks = useMemo(
     () =>
       [...videoTasks].sort((a, b) => Number.parseInt(a.number, 10) - Number.parseInt(b.number, 10)),
@@ -192,6 +250,101 @@ export function VideoTaskBoard() {
 
   const handleStartGeneration = () => {
     generateMutation.mutate(selected.size ? Array.from(selected) : undefined);
+  };
+
+  const startEditingPrompt = (task: VideoTask) => {
+    promptCancelRef.current = false;
+    setEditingPrompt({
+      number: task.number,
+      value: task.prompt ?? '',
+      original: task.prompt ?? '',
+    });
+  };
+
+  const handlePromptChange = (value: string) => {
+    setEditingPrompt((prev) => (prev ? { ...prev, value } : prev));
+  };
+
+  const commitPromptChange = () => {
+    if (!editingPrompt) return;
+    const trimmed = editingPrompt.value.trim();
+    const originalTrimmed = editingPrompt.original.trim();
+
+    if (trimmed === originalTrimmed) {
+      setEditingPrompt(null);
+      promptCancelRef.current = false;
+      return;
+    }
+
+    updatePromptMutation.mutate({ number: editingPrompt.number, prompt: trimmed });
+  };
+
+  const handlePromptBlur = () => {
+    if (promptCancelRef.current) {
+      promptCancelRef.current = false;
+      return;
+    }
+
+    commitPromptChange();
+  };
+
+  const handlePromptKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Escape') {
+      promptCancelRef.current = true;
+      setEditingPrompt(null);
+      return;
+    }
+
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      commitPromptChange();
+    }
+  };
+
+  const handleOutputFolderButtonClick = () => {
+    outputFolderInputRef.current?.click();
+  };
+
+  const handleOutputFolderChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const fileList = Array.from(event.target.files ?? []);
+    event.target.value = '';
+    if (!fileList.length) {
+      toast.info('未选择任何文件夹');
+      return;
+    }
+
+    const directory = extractDirectoryFromFile(fileList[0] as File & { path?: string; webkitRelativePath?: string });
+    if (!directory) {
+      toast.error('无法解析所选文件夹路径，请在设置中手动填写');
+      return;
+    }
+
+    updateSavePathMutation.mutate(directory);
+  };
+
+  const handleOpenOutputLocation = (task: VideoTask) => {
+    const location = task.localPath ?? task.remoteUrl;
+    if (!location) {
+      toast.info('该任务尚未生成视频文件');
+      return;
+    }
+
+    if (/^https?:/i.test(location)) {
+      window.open(location, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    const directory = getDirectoryPath(location);
+    if (directory) {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(directory).catch(() => {
+          /* clipboard unavailable */
+        });
+      }
+      toast.info(`视频文件位于：${directory}`);
+    } else {
+      toast.info(location);
+    }
   };
 
   const handleFormSubmit = (payload: VideoTaskFormSubmitPayload) => {
@@ -245,6 +398,14 @@ export function VideoTaskBoard() {
                 <Trash2Icon className="mr-2 h-4 w-4" /> 清空全部
               </Button>
               <Button
+                variant="outline"
+                size="sm"
+                onClick={handleOutputFolderButtonClick}
+                disabled={updateSavePathMutation.isPending}
+              >
+                视频存储文件夹
+              </Button>
+              <Button
                 size="sm"
                 className="ml-auto bg-purple-600 hover:bg-purple-700"
                 disabled={generateMutation.isPending}
@@ -264,6 +425,18 @@ export function VideoTaskBoard() {
             </div>
 
             <ScrollArea className="h-[500px] rounded-md border border-slate-200">
+              <input
+                ref={(node) => {
+                  outputFolderInputRef.current = node;
+                  if (node) {
+                    node.setAttribute('webkitdirectory', '');
+                    node.setAttribute('directory', '');
+                  }
+                }}
+                type="file"
+                className="hidden"
+                onChange={handleOutputFolderChange}
+              />
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-100">
@@ -312,9 +485,27 @@ export function VideoTaskBoard() {
                           )}
                         </TableCell>
                         <TableCell className="max-w-[280px]">
-                          <div className="text-xs text-slate-600 line-clamp-2" title={task.prompt}>
-                            {task.prompt || '—'}
-                          </div>
+                          {editingPrompt?.number === task.number ? (
+                            <Textarea
+                              value={editingPrompt.value}
+                              onChange={(event) => handlePromptChange(event.target.value)}
+                              onBlur={handlePromptBlur}
+                              onKeyDown={handlePromptKeyDown}
+                              rows={4}
+                              autoFocus
+                              className="text-xs"
+                              disabled={updatePromptMutation.isPending}
+                            />
+                          ) : (
+                            <button
+                              type="button"
+                              className="w-full text-left text-xs text-slate-600 whitespace-pre-wrap break-words"
+                              title={task.prompt || '点击编辑提示词'}
+                              onClick={() => startEditingPrompt(task)}
+                            >
+                              {task.prompt || '—'}
+                            </button>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Badge className={cn('font-medium text-xs', STATUS_COLOR[task.status] ?? 'bg-slate-100 text-slate-700')}>
@@ -331,12 +522,14 @@ export function VideoTaskBoard() {
                         </TableCell>
                         <TableCell className="max-w-[200px]">
                           {task.localPath || task.remoteUrl ? (
-                            <span
-                              className="block truncate text-xs text-slate-600"
-                              title={task.localPath || task.remoteUrl}
+                            <button
+                              type="button"
+                              className="block truncate text-xs font-medium text-blue-600 underline-offset-2 hover:underline"
+                              title="点击查看视频所在文件夹"
+                              onClick={() => handleOpenOutputLocation(task)}
                             >
                               {getDisplayValue(task.localPath ?? task.remoteUrl)}
-                            </span>
+                            </button>
                           ) : (
                             <span className="text-xs text-muted-foreground">—</span>
                           )}

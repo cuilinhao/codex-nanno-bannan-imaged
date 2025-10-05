@@ -109,7 +109,7 @@ export function createEmptyVideoTaskDraft(defaults?: Partial<VideoTaskFormValues
   const providedRows = defaults?.rows?.length ? defaults.rows.map(createVideoTaskFormRow) : undefined;
   return {
     rows: providedRows ?? [createVideoTaskFormRow()],
-    aspectRatio: defaults?.aspectRatio ?? '16:9',
+    aspectRatio: defaults?.aspectRatio ?? '9:16',
     watermark: defaults?.watermark ?? '',
     callbackUrl: defaults?.callbackUrl ?? '',
     seeds: defaults?.seeds ?? '',

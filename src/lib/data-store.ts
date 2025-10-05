@@ -31,7 +31,7 @@ async function ensureDataFile(): Promise<void> {
       videoSettings: {
         apiKey: '',
         savePath: 'public/generated_videos',
-        defaultAspectRatio: '16:9',
+        defaultAspectRatio: '9:16',
         defaultWatermark: '',
         defaultCallback: '',
         enableFallback: false,
