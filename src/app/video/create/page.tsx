@@ -35,16 +35,40 @@ export default function CreateVideoTaskPage() {
   );
 
   const addTaskMutation = useMutation({
-    mutationFn: (payload: VideoTaskFormSubmitPayload) => api.addVideoTask(payload),
-    onSuccess: () => {
-      toast.success('已添加视频任务');
-      queryClient.invalidateQueries({ queryKey: ['video-tasks'] });
+    mutationFn: async (payload: VideoTaskFormSubmitPayload) => {
+      const results: Awaited<ReturnType<typeof api.addVideoTask>>[] = [];
+
+      for (let index = 0; index < payload.rows.length; index += 1) {
+        const row = payload.rows[index];
+        const result = await api.addVideoTask({
+          prompt: row.prompt,
+          imageUrls: [row.imageUrl],
+          aspectRatio: payload.aspectRatio,
+          watermark: payload.watermark,
+          callbackUrl: payload.callbackUrl,
+          seeds: payload.seeds,
+          enableFallback: payload.enableFallback,
+          enableTranslation: payload.enableTranslation,
+        });
+        results.push(result);
+      }
+
+      return results;
+    },
+    onSuccess: async (results) => {
+      const count = results?.length ?? 0;
+      toast.success(`已添加 ${count} 个视频任务`);
+      await queryClient.invalidateQueries({ queryKey: ['video-tasks'] });
       router.push('/?tab=image-to-video');
     },
     onError: (error: Error) => toast.error(error.message || '添加视频任务失败'),
   });
 
   const handleFormSubmit = (payload: VideoTaskFormSubmitPayload) => {
+    if (!payload.rows.length) {
+      toast.warning('请至少添加一行任务');
+      return;
+    }
     addTaskMutation.mutate(payload);
   };
 

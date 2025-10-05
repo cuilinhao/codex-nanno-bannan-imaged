@@ -20,11 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2Icon, FilmIcon, PlayCircleIcon } from 'lucide-react';
 import { api, VideoTask } from '@/lib/api';
 import { cn } from '@/lib/utils';
-import {
-  VideoTaskForm,
-  VideoTaskFormSubmitPayload,
-  createEmptyVideoTaskDraft,
-} from './video-task-form';
+import { VideoTaskForm, VideoTaskFormSubmitPayload, createEmptyVideoTaskDraft } from './video-task-form';
 
 const STATUS_COLOR: Record<string, string> = {
   等待中: 'bg-slate-100 text-slate-700 border border-slate-200',
@@ -70,17 +66,13 @@ export function VideoTaskBoard() {
 
   const addTaskMutation = useMutation({
     mutationFn: async (payload: VideoTaskFormSubmitPayload) => {
-      // 一个图片对应一个任务，需要拆分
-      console.log('[VideoTaskBoard] 开始创建任务，图片数量:', payload.imageUrls.length);
-      console.log('[VideoTaskBoard] 提交的数据:', payload);
+      const results: Awaited<ReturnType<typeof api.addVideoTask>>[] = [];
 
-      const tasks = payload.imageUrls.map((imageUrl, index) => {
-        const promptLines = payload.prompt.split(/\r?\n/).filter(Boolean);
-        const singlePrompt = promptLines[index]?.replace(/^\d+\.\s*/, '').trim() || payload.prompt;
-
+      for (let index = 0; index < payload.rows.length; index += 1) {
+        const row = payload.rows[index];
         const taskPayload = {
-          prompt: singlePrompt,
-          imageUrls: [imageUrl],
+          prompt: row.prompt,
+          imageUrls: [row.imageUrl],
           aspectRatio: payload.aspectRatio,
           watermark: payload.watermark,
           callbackUrl: payload.callbackUrl,
@@ -89,20 +81,20 @@ export function VideoTaskBoard() {
           enableTranslation: payload.enableTranslation,
         };
 
-        console.log(`[VideoTaskBoard] 任务 ${index + 1}:`, taskPayload);
+        console.log('[VideoTaskBoard] 创建任务', { index: index + 1, taskPayload });
+        const result = await api.addVideoTask(taskPayload);
+        results.push(result);
+      }
 
-        return api.addVideoTask(taskPayload);
-      });
-
-      const results = await Promise.all(tasks);
-      console.log('[VideoTaskBoard] 任务创建完成，结果:', results);
-
+      console.log('[VideoTaskBoard] 任务创建完成', results);
       return results;
     },
-    onSuccess: (results) => {
+    onSuccess: async (results) => {
       const count = results?.length || 0;
       toast.success(`已添加 ${count} 个视频任务`);
-      queryClient.invalidateQueries({ queryKey: ['video-tasks'] });
+      await queryClient.invalidateQueries({ queryKey: ['video-tasks'] });
+      await queryClient.refetchQueries({ queryKey: ['video-tasks'], type: 'active' });
+      setFormResetKey((prev) => prev + 1);
     },
     onError: (error: Error) => toast.error(error.message || '添加视频任务失败'),
   });
@@ -176,7 +168,13 @@ export function VideoTaskBoard() {
     generateMutation.mutate(selected.size ? Array.from(selected) : undefined);
   };
 
+  const [formResetKey, setFormResetKey] = useState(0);
+
   const handleFormSubmit = (payload: VideoTaskFormSubmitPayload) => {
+    if (!payload.rows.length) {
+      toast.warning('请至少添加一行任务');
+      return;
+    }
     addTaskMutation.mutate(payload);
   };
 
@@ -310,6 +308,7 @@ export function VideoTaskBoard() {
         <CardContent className="p-6">
           <div className="min-h-[500px]">
             <VideoTaskForm
+              key={formResetKey}
               mode="create"
               initialValues={initialFormValues}
               onSubmit={handleFormSubmit}

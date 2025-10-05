@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { FolderUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { FolderUpIcon, ImagePlus, PlusIcon, Trash2Icon } from 'lucide-react';
 
 export interface VideoTaskFormRow {
   id: string;
@@ -38,9 +38,13 @@ export interface VideoTaskFormValues {
   enableTranslation: boolean;
 }
 
-export interface VideoTaskFormSubmitPayload {
+export interface VideoTaskRowPayload {
+  imageUrl: string;
   prompt: string;
-  imageUrls: string[];
+}
+
+export interface VideoTaskFormSubmitPayload {
+  rows: VideoTaskRowPayload[];
   aspectRatio: string;
   watermark: string;
   callbackUrl: string;
@@ -426,8 +430,6 @@ export function VideoTaskForm({
       return;
     }
 
-    // 检查是否所有行都有提示词
-    const allHavePrompts = trimmedRows.every((row) => row.prompt);
     const someHavePrompts = trimmedRows.some((row) => row.prompt);
 
     if (!someHavePrompts) {
@@ -442,14 +444,11 @@ export function VideoTaskForm({
       prompt: row.prompt || defaultPrompt,
     }));
 
-    const combinedPrompt =
-      normalizedRows.length === 1
-        ? normalizedRows[0].prompt
-        : normalizedRows.map((row, index) => `${index + 1}. ${row.prompt}`).join('\n');
-
     const payload: VideoTaskFormSubmitPayload = {
-      prompt: combinedPrompt,
-      imageUrls: trimmedRows.map((row) => row.imageUrl),
+      rows: normalizedRows.map((row) => ({
+        imageUrl: row.imageUrl,
+        prompt: row.prompt,
+      })),
       aspectRatio: values.aspectRatio,
       watermark: values.watermark,
       callbackUrl: values.callbackUrl,
@@ -502,7 +501,10 @@ export function VideoTaskForm({
                   onClick={handleSingleImageButtonClick}
                   disabled={disableUpload || isUploadingImages}
                 >
-                  <PlusIcon className="mr-2 h-4 w-4" /> 添加单张图片
+                  <ImagePlus className="mr-2 h-4 w-4" /> 添加单张图片
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addRow()}>
+                  <PlusIcon className="mr-2 h-4 w-4" /> 添加空行
                 </Button>
               </div>
             </div>
