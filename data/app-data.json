@@ -231,6 +231,38 @@
       "localPath": "generated_videos/2_1759647945092_d727a863563c2029f320a0aa0f1203a9_1759647939.mp4",
       "remoteUrl": "https://tempfile.aiquickdraw.com/p/d727a863563c2029f320a0aa0f1203a9_1759647939.mp4",
       "actualFilename": "2_1759647945092_d727a863563c2029f320a0aa0f1203a9_1759647939.mp4"
+    },
+    {
+      "number": "3",
+      "prompt": "唱歌",
+      "imageUrls": [
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759649566217/rumi.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T073252Z&X-Amz-Expires=300&X-Amz-Signature=0378c80b5ce53358d8b5ef7fdaf975382d5c9cf31012426d030798e3bb347943&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
+      ],
+      "aspectRatio": "9:16",
+      "watermark": "",
+      "callbackUrl": "",
+      "seeds": "",
+      "enableFallback": false,
+      "enableTranslation": true,
+      "status": "等待中",
+      "progress": 0,
+      "createdAt": "2025-10-05T07:33:07.627Z"
+    },
+    {
+      "number": "4",
+      "prompt": "跳舞",
+      "imageUrls": [
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759649566217/miya.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T073254Z&X-Amz-Expires=300&X-Amz-Signature=e0d415928fc7fd7de1402dfec9edfff1ef62dd681ed6f3c0c95eeca19e34b1c0&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
+      ],
+      "aspectRatio": "9:16",
+      "watermark": "",
+      "callbackUrl": "",
+      "seeds": "",
+      "enableFallback": false,
+      "enableTranslation": true,
+      "status": "等待中",
+      "progress": 0,
+      "createdAt": "2025-10-05T07:33:07.879Z"
     }
   ],
   "generatedImages": {},
