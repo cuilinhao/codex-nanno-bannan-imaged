@@ -192,83 +192,41 @@
   "videoTasks": [
     {
       "number": "1",
-      "prompt": "唱歌",
+      "prompt": "在唱歌",
       "imageUrls": [
-        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759647745669/rumi.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T070234Z&X-Amz-Expires=300&X-Amz-Signature=829ca78116949076055a49f955a8e3361a1a9b51ba363ad5e832b3eb3c586f86&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759652644161/bbb.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T082405Z&X-Amz-Expires=300&X-Amz-Signature=cbf46be68809c3be2fd5f8b7460cbfc4f613b8f7c20514c6f2550c93bb60c8a9&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
       ],
-      "aspectRatio": "9:16",
+      "aspectRatio": "16:9",
       "watermark": "",
       "callbackUrl": "",
       "seeds": "",
       "enableFallback": false,
       "enableTranslation": true,
-      "status": "成功",
-      "progress": 100,
-      "createdAt": "2025-10-05T07:02:48.081Z",
-      "updatedAt": "2025-10-05T07:05:58.013Z",
-      "localPath": "generated_videos/1_1759647950662_1a3dc3eae3e323aec85f3d7515554333_1759647947.mp4",
-      "remoteUrl": "https://tempfile.aiquickdraw.com/p/1a3dc3eae3e323aec85f3d7515554333_1759647947.mp4",
-      "actualFilename": "1_1759647950662_1a3dc3eae3e323aec85f3d7515554333_1759647947.mp4",
-      "errorMsg": ""
+      "status": "等待中",
+      "progress": 0,
+      "createdAt": "2025-10-05T08:27:01.475Z"
     },
     {
       "number": "2",
-      "prompt": "跳舞",
+      "prompt": "在说话",
       "imageUrls": [
-        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759647745669/miya.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T070236Z&X-Amz-Expires=300&X-Amz-Signature=66c724de63c65aacd95cf0009fcfc6e650d34984203dce0b6f1b3719f92e4692&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759652644161/ccc.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T082407Z&X-Amz-Expires=300&X-Amz-Signature=a0ca9c0cad018c0902c9202f6c6109e304e2b075f19201476699c980fd546505&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
       ],
-      "aspectRatio": "9:16",
+      "aspectRatio": "16:9",
       "watermark": "",
       "callbackUrl": "",
       "seeds": "",
       "enableFallback": false,
       "enableTranslation": true,
-      "status": "成功",
-      "progress": 100,
-      "createdAt": "2025-10-05T07:02:48.344Z",
-      "errorMsg": "",
-      "updatedAt": "2025-10-05T07:05:52.528Z",
-      "localPath": "generated_videos/2_1759647945092_d727a863563c2029f320a0aa0f1203a9_1759647939.mp4",
-      "remoteUrl": "https://tempfile.aiquickdraw.com/p/d727a863563c2029f320a0aa0f1203a9_1759647939.mp4",
-      "actualFilename": "2_1759647945092_d727a863563c2029f320a0aa0f1203a9_1759647939.mp4"
+      "status": "等待中",
+      "progress": 0,
+      "createdAt": "2025-10-05T08:27:01.727Z"
     },
     {
       "number": "3",
-      "prompt": "唱歌",
+      "prompt": "跳舞收到回复交电话费比较束带结发很快就收到货发卡机打撒康师傅克里斯丁荆防颗粒受跳舞收到回复交电话费比较束带结发很快就收到货发卡机打撒康师傅克里斯丁荆防颗粒受打击发啦扩大时打击发啦扩大时",
       "imageUrls": [
-        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759649566217/rumi.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T073252Z&X-Amz-Expires=300&X-Amz-Signature=0378c80b5ce53358d8b5ef7fdaf975382d5c9cf31012426d030798e3bb347943&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
-      ],
-      "aspectRatio": "9:16",
-      "watermark": "",
-      "callbackUrl": "",
-      "seeds": "",
-      "enableFallback": false,
-      "enableTranslation": true,
-      "status": "等待中",
-      "progress": 0,
-      "createdAt": "2025-10-05T07:33:07.627Z"
-    },
-    {
-      "number": "4",
-      "prompt": "跳舞",
-      "imageUrls": [
-        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759649566217/miya.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T073254Z&X-Amz-Expires=300&X-Amz-Signature=e0d415928fc7fd7de1402dfec9edfff1ef62dd681ed6f3c0c95eeca19e34b1c0&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
-      ],
-      "aspectRatio": "9:16",
-      "watermark": "",
-      "callbackUrl": "",
-      "seeds": "",
-      "enableFallback": false,
-      "enableTranslation": true,
-      "status": "等待中",
-      "progress": 0,
-      "createdAt": "2025-10-05T07:33:07.879Z"
-    },
-    {
-      "number": "5",
-      "prompt": "test",
-      "imageUrls": [
-        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759650388604/rumi.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T074632Z&X-Amz-Expires=300&X-Amz-Signature=cf416915dbba2f0713101b136911e3b7f1759d8c549973219660c842adcf8429&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759652644161/aaa.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T082408Z&X-Amz-Expires=300&X-Amz-Signature=822a7c46086796e59822b10d777b813ac28582b1ea58448ceae23cc80f2bdf1b&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
       ],
       "aspectRatio": "16:9",
       "watermark": "",
@@ -278,23 +236,7 @@
       "enableTranslation": true,
       "status": "等待中",
       "progress": 0,
-      "createdAt": "2025-10-05T07:46:41.873Z"
-    },
-    {
-      "number": "6",
-      "prompt": "555",
-      "imageUrls": [
-        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759650388604/miya.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T074633Z&X-Amz-Expires=300&X-Amz-Signature=049b0797dc1e7bac1fc9b3815cc4dbfd45bcddd270319a40695f8815594cca9b&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
-      ],
-      "aspectRatio": "16:9",
-      "watermark": "",
-      "callbackUrl": "",
-      "seeds": "",
-      "enableFallback": false,
-      "enableTranslation": true,
-      "status": "等待中",
-      "progress": 0,
-      "createdAt": "2025-10-05T07:46:42.120Z"
+      "createdAt": "2025-10-05T08:27:01.951Z"
     }
   ],
   "generatedImages": {},

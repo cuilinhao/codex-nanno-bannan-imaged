@@ -31,6 +31,28 @@ const STATUS_COLOR: Record<string, string> = {
   提交中: 'bg-sky-100 text-sky-700 border border-sky-200',
 };
 
+function getFileName(raw?: string | null) {
+  if (!raw) return '';
+
+  try {
+    const parsed = new URL(raw);
+    const decodedPath = decodeURIComponent(parsed.pathname);
+    const segments = decodedPath.split('/').filter(Boolean);
+    if (segments.length) return segments[segments.length - 1];
+  } catch (error) {
+    // Not a valid URL, fall back to path-style parsing
+  }
+
+  const parts = raw.split(/[\\/]/).filter(Boolean);
+  return parts.length ? parts[parts.length - 1] : raw;
+}
+
+function getDisplayValue(raw?: string | null) {
+  if (!raw) return '—';
+  const name = getFileName(raw);
+  return name || raw;
+}
+
 export function VideoTaskBoard() {
   const queryClient = useQueryClient();
   const { data: videoData, isLoading } = useQuery({
@@ -247,21 +269,23 @@ export function VideoTaskBoard() {
                   <TableRow className="bg-slate-100">
                     <TableHead className="w-12">选择</TableHead>
                     <TableHead className="w-16">编号</TableHead>
-                    <TableHead>提示词与参考图</TableHead>
+                    <TableHead className="w-36">参考图</TableHead>
+                    <TableHead>提示词</TableHead>
                     <TableHead className="w-24">状态</TableHead>
                     <TableHead className="w-20">进度</TableHead>
+                    <TableHead className="w-44">生成文件</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                         正在加载视频任务...
                       </TableCell>
                     </TableRow>
                   ) : !sortedTasks.length ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                         暂无视频任务，请点击右上角的“添加任务”。
                       </TableCell>
                     </TableRow>
@@ -275,14 +299,21 @@ export function VideoTaskBoard() {
                           />
                         </TableCell>
                         <TableCell className="font-semibold text-slate-700">{task.number}</TableCell>
-                        <TableCell className="max-w-md">
-                          <div className="space-y-2">
-                            <div className="text-xs text-slate-600 line-clamp-2">{task.prompt}</div>
-                            {task.imageUrls?.[0] && (
-                              <div className="text-xs text-blue-600 truncate" title={task.imageUrls[0]}>
-                                📷 {task.imageUrls[0]}
-                              </div>
-                            )}
+                        <TableCell className="max-w-[180px]">
+                          {task.imageUrls?.[0] ? (
+                            <span
+                              className="block truncate text-xs font-medium text-blue-600"
+                              title={task.imageUrls[0]}
+                            >
+                              📷 {getDisplayValue(task.imageUrls[0])}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="max-w-[280px]">
+                          <div className="text-xs text-slate-600 line-clamp-2" title={task.prompt}>
+                            {task.prompt || '—'}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -297,6 +328,18 @@ export function VideoTaskBoard() {
                               {task.status === '成功' ? '100%' : `${task.progress ?? 0}%`}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell className="max-w-[200px]">
+                          {task.localPath || task.remoteUrl ? (
+                            <span
+                              className="block truncate text-xs text-slate-600"
+                              title={task.localPath || task.remoteUrl}
+                            >
+                              {getDisplayValue(task.localPath ?? task.remoteUrl)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                          )}
                         </TableCell>
                       </TableRow>
                     ))
