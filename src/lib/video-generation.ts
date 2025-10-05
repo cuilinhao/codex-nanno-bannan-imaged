@@ -12,6 +12,12 @@ interface GenerateVideosPayload {
   numbers?: string[];
 }
 
+function maskToken(token?: string | null, visible: number = 4) {
+  if (!token) return 'N/A';
+  if (token.length <= visible * 2) return `${token.slice(0, 2)}***${token.slice(-2)}`;
+  return `${token.slice(0, visible)}...${token.slice(-visible)}`;
+}
+
 async function ensureDir(dir: string) {
   await fs.mkdir(dir, { recursive: true });
 }
@@ -63,6 +69,36 @@ async function fetchJson<T = Record<string, unknown>>(
 
   for (let attempt = 1; attempt <= retries; attempt += 1) {
     try {
+      const method = (config.method ?? 'GET').toUpperCase();
+      const headersLog: Record<string, unknown> = {};
+      const rawHeaders = config.headers ?? {};
+      if (typeof rawHeaders === 'object' && rawHeaders !== null) {
+        for (const [key, value] of Object.entries(rawHeaders as Record<string, unknown>)) {
+          if (key.toLowerCase() === 'authorization' && typeof value === 'string') {
+            headersLog[key] = maskToken(value);
+          } else {
+            headersLog[key] = value;
+          }
+        }
+      }
+
+      const payloadPreview =
+        typeof config.data === 'string'
+          ? config.data
+          : config.data
+            ? JSON.stringify(config.data, null, 2)
+            : undefined;
+
+      console.log('[HTTP] 请求开始', {
+        attempt,
+        retries,
+        method,
+        url,
+        timeoutMs,
+        headers: headersLog,
+        payload: payloadPreview,
+      });
+
       const response = await axios({
         url,
         ...config,
@@ -82,9 +118,41 @@ async function fetchJson<T = Record<string, unknown>>(
         throw new Error(`HTTP ${response.status}: ${data}`);
       }
 
+      console.log('[HTTP] 请求成功', {
+        url,
+        method,
+        status: response.status,
+        headers: Object.fromEntries(
+          Object.entries(response.headers || {}).map(([key, value]) => [key, value]),
+        ),
+      });
+
       return response.data as T;
     } catch (error) {
       lastError = error as Error;
+
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+        const responseData = error.response?.data;
+        console.error('[HTTP] 请求失败', {
+          attempt,
+          retries,
+          url,
+          method: (config.method ?? 'GET').toUpperCase(),
+          status,
+          code: error.code,
+          message: error.message,
+          responseData: typeof responseData === 'string' ? responseData : JSON.stringify(responseData, null, 2),
+        });
+      } else {
+        console.error('[HTTP] 未知错误', {
+          attempt,
+          retries,
+          url,
+          method: (config.method ?? 'GET').toUpperCase(),
+          message: (error as Error).message,
+        });
+      }
 
       if (axios.isAxiosError(error)) {
         if (error.code === 'ECONNABORTED') {
@@ -152,6 +220,7 @@ async function downloadVideo(url: string, number: string, saveDir: string): Prom
 
 async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string) {
   await updateVideoTask(task.number, { status: '生成中', errorMsg: '', progress: 5 });
+  console.log(`[视频任务 ${task.number}] 状态更新 -> 生成中 (progress 5%)`);
 
   const payload: Record<string, unknown> = {
     prompt: task.prompt,
@@ -212,6 +281,7 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
 
     console.log(`[视频任务 ${task.number}] ✅ 获取到 taskId: ${taskId}`);
     await updateVideoTask(task.number, { status: '任务已提交，等待处理...', progress: 15 });
+    console.log(`[视频任务 ${task.number}] 状态更新 -> 任务已提交，等待处理... (progress 15%)`);
 
     const pollUrl = `${RECORD_URL}?taskId=${encodeURIComponent(taskId)}`;
     let pollCount = 0;
@@ -258,22 +328,29 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
       if (payloadData.successFlag === 1) {
         console.log(`[视频任务 ${task.number}] ✅ 视频生成成功！`);
         await updateVideoTask(task.number, { status: '生成完成，开始下载...', progress: 95 });
+        console.log(`[视频任务 ${task.number}] 状态更新 -> 生成完成，开始下载... (progress 95%)`);
         const resultUrls: string[] = payloadData.response?.resultUrls ?? [];
         console.log(`[视频任务 ${task.number}] 视频链接:`, resultUrls);
         if (!resultUrls.length) {
           throw new Error('查询接口未返回视频链接');
         }
-    console.log(`[视频任务 ${task.number}] 开始下载视频: ${resultUrls[0]}`);
-    const { localPath, actualFilename } = await downloadVideo(resultUrls[0], task.number, saveDir);
-    console.log(`[视频任务 ${task.number}] ✅ 视频下载完成: ${localPath}`);
-    await updateVideoTask(task.number, {
-      status: '成功',
-      progress: 100,
-      localPath,
-      remoteUrl: resultUrls[0],
-      actualFilename,
-      errorMsg: '',
-    });
+
+        console.log(`[视频任务 ${task.number}] 开始下载视频: ${resultUrls[0]}`);
+        const { localPath, actualFilename } = await downloadVideo(resultUrls[0], task.number, saveDir);
+        console.log(`[视频任务 ${task.number}] ✅ 视频下载完成: ${localPath}`);
+        await updateVideoTask(task.number, {
+          status: '成功',
+          progress: 100,
+          localPath,
+          remoteUrl: resultUrls[0],
+          actualFilename,
+          errorMsg: '',
+        });
+        console.log(`[视频任务 ${task.number}] 状态更新 -> 成功 (progress 100%)`, {
+          localPath,
+          remoteUrl: resultUrls[0],
+          actualFilename,
+        });
         console.log(`[视频任务 ${task.number}] ==================== 任务完成 ====================\n`);
         return;
       }
@@ -284,9 +361,13 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
       }
 
       console.log(`[视频任务 ${task.number}] ⏳ 仍在处理中，继续轮询...`);
+      const progressValue = Math.min(90, 15 + pollCount * 2);
       await updateVideoTask(task.number, {
         status: `生成中... (轮询 ${pollCount})`,
-        progress: Math.min(90, 15 + pollCount * 2),
+        progress: progressValue,
+      });
+      console.log(`[视频任务 ${task.number}] 状态更新 -> 生成中... (轮询 ${pollCount})`, {
+        progress: progressValue,
       });
     }
 
@@ -299,26 +380,80 @@ async function processVideoTask(task: VideoTask, apiKey: string, saveDir: string
       status: '失败',
       errorMsg: errorMessage,
     });
+    console.log(`[视频任务 ${task.number}] 状态更新 -> 失败`, { errorMessage });
   }
 }
 
 export async function generateVideos({ numbers }: GenerateVideosPayload) {
   const data = await readAppData();
   const { apiSettings, videoTasks: tasks } = data;
+
+  console.log('\n[视频生成] ==================== 任务初始化 ====================');
+  console.log('[视频生成] 请求参数', { numbers });
+  console.log('[视频生成] 当前任务总数', tasks.length);
+
   const targets = (() => {
     const filtered = numbers?.length ? tasks.filter((item) => numbers.includes(item.number)) : tasks;
     return filtered.filter((item) => ['等待中', '失败'].includes(item.status));
   })();
 
+  console.log('[视频生成] 目标任务详情', targets.map((item) => ({
+    number: item.number,
+    status: item.status,
+    prompt: item.prompt,
+    image: item.imageUrls?.[0],
+    aspectRatio: item.aspectRatio,
+    enableFallback: item.enableFallback,
+    enableTranslation: item.enableTranslation,
+  })));
+
   if (!targets.length) {
+    console.log('[视频生成] 无可执行任务，返回提示');
+    console.log('[视频生成] ======================================================\n');
     return { success: false, message: '没有需要生成的视频任务' };
   }
 
-  const { apiKey } = pickVideoApiKey(data);
+  const { apiKey, source } = pickVideoApiKey(data);
   const saveDir = resolveSaveDir(data.videoSettings.savePath);
-  const limit = pLimit(Math.max(1, apiSettings.threadCount ?? 1));
+  const threadCount = Math.max(1, apiSettings.threadCount ?? 1);
+  const limit = pLimit(threadCount);
 
-  await Promise.all(targets.map((task) => limit(() => processVideoTask(task, apiKey, saveDir))));
+  console.log('[视频生成] 使用的配置', {
+    apiKeySource: source,
+    apiKeyMasked: maskToken(apiKey),
+    saveDir,
+    threadCount,
+    defaultAspectRatio: data.videoSettings.defaultAspectRatio,
+    defaultWatermark: data.videoSettings.defaultWatermark,
+    defaultCallback: data.videoSettings.defaultCallback,
+  });
+
+  const startedAt = Date.now();
+
+  await Promise.all(
+    targets.map((task) =>
+      limit(async () => {
+        const taskStart = Date.now();
+        console.log(`[视频生成] >>>> 并发任务开始 #${task.number}`, {
+          number: task.number,
+          prompt: task.prompt,
+          image: task.imageUrls?.[0],
+          status: task.status,
+        });
+        await processVideoTask(task, apiKey, saveDir);
+        console.log(`[视频生成] <<<< 并发任务结束 #${task.number}`, {
+          number: task.number,
+          durationMs: Date.now() - taskStart,
+        });
+      }),
+    ),
+  );
+
+  console.log('[视频生成] 所有任务已完成', {
+    durationMs: Date.now() - startedAt,
+    count: targets.length,
+  });
+  console.log('[视频生成] ======================================================\n');
 
   return { success: true };
 }
