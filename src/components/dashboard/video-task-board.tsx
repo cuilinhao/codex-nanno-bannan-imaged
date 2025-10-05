@@ -64,6 +64,9 @@ export function VideoTaskBoard() {
     [settings],
   );
 
+  const [activePage, setActivePage] = useState<'tasks' | 'create'>('tasks');
+  const [formResetKey, setFormResetKey] = useState(0);
+
   const addTaskMutation = useMutation({
     mutationFn: async (payload: VideoTaskFormSubmitPayload) => {
       const results: Awaited<ReturnType<typeof api.addVideoTask>>[] = [];
@@ -95,6 +98,7 @@ export function VideoTaskBoard() {
       await queryClient.invalidateQueries({ queryKey: ['video-tasks'] });
       await queryClient.refetchQueries({ queryKey: ['video-tasks'], type: 'active' });
       setFormResetKey((prev) => prev + 1);
+      setActivePage('tasks');
     },
     onError: (error: Error) => toast.error(error.message || '添加视频任务失败'),
   });
@@ -167,9 +171,6 @@ export function VideoTaskBoard() {
   const handleStartGeneration = () => {
     generateMutation.mutate(selected.size ? Array.from(selected) : undefined);
   };
-
-  const [activePage, setActivePage] = useState<'tasks' | 'create'>('tasks');
-  const [formResetKey, setFormResetKey] = useState(0);
 
   const handleFormSubmit = (payload: VideoTaskFormSubmitPayload) => {
     if (!payload.rows.length) {
