@@ -182,7 +182,7 @@
   },
   "videoSettings": {
     "apiKey": "",
-    "savePath": "public/generated_videos",
+    "savePath": "/Users/linhao/Desktop/test-video",
     "defaultAspectRatio": "16:9",
     "defaultWatermark": "",
     "defaultCallback": "",
@@ -194,7 +194,7 @@
       "number": "1",
       "prompt": "在唱歌",
       "imageUrls": [
-        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759652644161/bbb.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T082405Z&X-Amz-Expires=300&X-Amz-Signature=cbf46be68809c3be2fd5f8b7460cbfc4f613b8f7c20514c6f2550c93bb60c8a9&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
+        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759662222645/bbb.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T110344Z&X-Amz-Expires=300&X-Amz-Signature=89c8b4a532301a8efd7211c3f3961c2c80b45d35f09dfda49bea041adcda63ae&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
       ],
       "aspectRatio": "16:9",
       "watermark": "",
@@ -202,29 +202,14 @@
       "seeds": "",
       "enableFallback": false,
       "enableTranslation": true,
-      "status": "失败",
-      "progress": 17,
-      "createdAt": "2025-10-05T08:27:01.475Z",
-      "updatedAt": "2025-10-05T08:45:17.199Z",
-      "errorMsg": "Image fetch failed. Check access settings or use our File Upload API instead."
-    },
-    {
-      "number": "2",
-      "prompt": "在说话",
-      "imageUrls": [
-        "https://8021c9867ba6881cf688f0a25af0d32f.r2.cloudflarestorage.com/ai-image-video/uploads/video-references/1759652644161/ccc.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=d9a144f5fdd746dc53d078cb8912afcb%2F20251005%2Fauto%2Fs3%2Faws4_request&X-Amz-Date=20251005T082407Z&X-Amz-Expires=300&X-Amz-Signature=a0ca9c0cad018c0902c9202f6c6109e304e2b075f19201476699c980fd546505&X-Amz-SignedHeaders=host&x-amz-checksum-mode=ENABLED&x-id=GetObject"
-      ],
-      "aspectRatio": "16:9",
-      "watermark": "",
-      "callbackUrl": "",
-      "seeds": "",
-      "enableFallback": false,
-      "enableTranslation": true,
-      "status": "失败",
-      "progress": 15,
-      "createdAt": "2025-10-05T08:27:01.727Z",
-      "errorMsg": "Image fetch failed. Check access settings or use our File Upload API instead.",
-      "updatedAt": "2025-10-05T08:45:10.414Z"
+      "status": "成功",
+      "progress": 100,
+      "createdAt": "2025-10-05T11:03:51.396Z",
+      "errorMsg": "",
+      "updatedAt": "2025-10-05T11:06:06.889Z",
+      "localPath": "../../../test-video/1_1759662363805_b42a20cc9951550cab24007e21bb78ff_1759662357.mp4",
+      "remoteUrl": "https://tempfile.aiquickdraw.com/p/b42a20cc9951550cab24007e21bb78ff_1759662357.mp4",
+      "actualFilename": "1_1759662363805_b42a20cc9951550cab24007e21bb78ff_1759662357.mp4"
     }
   ],
   "generatedImages": {},

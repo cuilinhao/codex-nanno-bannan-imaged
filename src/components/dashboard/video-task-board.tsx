@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, KeyboardEvent, useMemo, useRef, useState } from 'react';
+import { KeyboardEvent, useMemo, useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -62,24 +62,6 @@ function getDirectoryPath(raw?: string | null) {
   return segments.join('/');
 }
 
-function extractDirectoryFromFile(file: File & { path?: string; webkitRelativePath?: string }) {
-  if (file.path) {
-    const normalized = file.path.replace(/\\/g, '/');
-    const segments = normalized.split('/');
-    segments.pop();
-    return segments.join('/');
-  }
-
-  if (file.webkitRelativePath) {
-    const normalized = file.webkitRelativePath.replace(/\\/g, '/');
-    const segments = normalized.split('/');
-    segments.pop();
-    return segments.join('/');
-  }
-
-  return '';
-}
-
 export function VideoTaskBoard() {
   const queryClient = useQueryClient();
   const { data: videoData, isLoading } = useQuery({
@@ -109,7 +91,7 @@ export function VideoTaskBoard() {
     | null
   >(null);
   const promptCancelRef = useRef(false);
-  const outputFolderInputRef = useRef<HTMLInputElement | null>(null);
+  const [isSelectingOutput, setIsSelectingOutput] = useState(false);
 
   const initialFormValues = useMemo(
     () =>
@@ -301,25 +283,30 @@ export function VideoTaskBoard() {
     }
   };
 
-  const handleOutputFolderButtonClick = () => {
-    outputFolderInputRef.current?.click();
-  };
+  const handleOutputFolderButtonClick = async () => {
+    if (isSelectingOutput) return;
+    try {
+      setIsSelectingOutput(true);
+      const response = await fetch('/api/system/select-folder', { method: 'POST' });
+      const data = (await response.json()) as { success: boolean; path?: string; message?: string };
 
-  const handleOutputFolderChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const fileList = Array.from(event.target.files ?? []);
-    event.target.value = '';
-    if (!fileList.length) {
-      toast.info('未选择任何文件夹');
-      return;
+      if (!response.ok) {
+        throw new Error(data.message || '选择文件夹失败');
+      }
+
+      if (!data.success || !data.path) {
+        if (data.message) {
+          toast.info(data.message);
+        }
+        return;
+      }
+
+      updateSavePathMutation.mutate(data.path);
+    } catch (error) {
+      toast.error((error as Error).message || '选择文件夹失败');
+    } finally {
+      setIsSelectingOutput(false);
     }
-
-    const directory = extractDirectoryFromFile(fileList[0] as File & { path?: string; webkitRelativePath?: string });
-    if (!directory) {
-      toast.error('无法解析所选文件夹路径，请在设置中手动填写');
-      return;
-    }
-
-    updateSavePathMutation.mutate(directory);
   };
 
   const handleOpenOutputLocation = (task: VideoTask) => {
@@ -401,7 +388,7 @@ export function VideoTaskBoard() {
                 variant="outline"
                 size="sm"
                 onClick={handleOutputFolderButtonClick}
-                disabled={updateSavePathMutation.isPending}
+                disabled={updateSavePathMutation.isPending || isSelectingOutput}
               >
                 视频存储文件夹
               </Button>
@@ -425,18 +412,6 @@ export function VideoTaskBoard() {
             </div>
 
             <ScrollArea className="h-[500px] rounded-md border border-slate-200">
-              <input
-                ref={(node) => {
-                  outputFolderInputRef.current = node;
-                  if (node) {
-                    node.setAttribute('webkitdirectory', '');
-                    node.setAttribute('directory', '');
-                  }
-                }}
-                type="file"
-                className="hidden"
-                onChange={handleOutputFolderChange}
-              />
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-100">
