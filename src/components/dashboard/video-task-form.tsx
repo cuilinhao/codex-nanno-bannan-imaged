@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
-import { FolderUpIcon, ImagePlus, PlusIcon, Trash2Icon } from 'lucide-react';
+import { FileSpreadsheet, FolderUpIcon, ImagePlus, Trash2Icon } from 'lucide-react';
 
 export interface VideoTaskFormRow {
   id: string;
@@ -141,6 +141,57 @@ function sanitizeRelativePath(raw: string) {
     .join('/');
 }
 
+function extractFirstCsvValue(line: string): string | null {
+  if (!line || !line.trim()) return null;
+
+  let inQuotes = false;
+  let buffer = '';
+
+  for (let index = 0; index < line.length; index += 1) {
+    const char = line[index];
+
+    if (char === '"') {
+      const isEscapedQuote = inQuotes && line[index + 1] === '"';
+      if (isEscapedQuote) {
+        buffer += '"';
+        index += 1;
+        continue;
+      }
+      inQuotes = !inQuotes;
+      continue;
+    }
+
+    if (char === ',' && !inQuotes) {
+      break;
+    }
+
+    buffer += char;
+  }
+
+  const normalized = buffer.replace(/^\ufeff/, '').trim();
+  return normalized.length ? normalized : null;
+}
+
+function parseCsvFirstColumn(content: string): string[] {
+  if (!content) return [];
+
+  const prompts = content
+    .split(/\r?\n/)
+    .map((line) => extractFirstCsvValue(line))
+    .filter((value): value is string => Boolean(value && value.trim()))
+    .map((value) => value.replace(/^"|"$/g, '').replace(/""/g, '"').trim())
+    .filter(Boolean);
+
+  if (!prompts.length) return [];
+
+  const firstValue = prompts[0].toLowerCase();
+  if (firstValue === 'prompt' || firstValue === '提示词' || firstValue === 'prompt text') {
+    return prompts.slice(1);
+  }
+
+  return prompts;
+}
+
 export function VideoTaskForm({
   mode,
   initialValues,
@@ -153,6 +204,7 @@ export function VideoTaskForm({
 }: VideoTaskFormProps) {
   const folderInputRef = useRef<HTMLInputElement | null>(null);
   const singleImageInputRef = useRef<HTMLInputElement | null>(null);
+  const csvInputRef = useRef<HTMLInputElement | null>(null);
   const [values, setValues] = useState<VideoTaskFormValues>(() => ({
     ...initialValues,
     rows: initialValues.rows.length ? initialValues.rows.map(createVideoTaskFormRow) : [createVideoTaskFormRow()],
@@ -187,13 +239,6 @@ export function VideoTaskForm({
     }));
   };
 
-  const addRow = (row?: Partial<VideoTaskFormRow>) => {
-    setValues((prev) => ({
-      ...prev,
-      rows: [...prev.rows, createVideoTaskFormRow(row)],
-    }));
-  };
-
   const removeRow = (id: string) => {
     setValues((prev) => {
       const nextRows = prev.rows.filter((row) => row.id !== id);
@@ -220,6 +265,25 @@ export function VideoTaskForm({
           nextRows.push(createVideoTaskFormRow({ imageUrl: url }));
         }
       });
+
+      return { ...prev, rows: nextRows };
+    });
+  };
+
+  const applyPromptsToRows = (prompts: string[]) => {
+    setValues((prev) => {
+      if (!prompts.length) return prev;
+
+      const nextRows = [...prev.rows];
+      let index = 0;
+
+      for (; index < nextRows.length && index < prompts.length; index += 1) {
+        nextRows[index] = { ...nextRows[index], prompt: prompts[index] };
+      }
+
+      for (; index < prompts.length; index += 1) {
+        nextRows.push(createVideoTaskFormRow({ prompt: prompts[index] }));
+      }
 
       return { ...prev, rows: nextRows };
     });
@@ -399,6 +463,32 @@ export function VideoTaskForm({
     void uploadImagesFromFiles(fileList);
   };
 
+  const handleCsvButtonClick = () => {
+    csvInputRef.current?.click();
+  };
+
+  const handleCsvChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    try {
+      const text = await file.text();
+      const prompts = parseCsvFirstColumn(text);
+
+      if (!prompts.length) {
+        toast.error('CSV 第一列未解析到有效提示词');
+        return;
+      }
+
+      applyPromptsToRows(prompts);
+      toast.success(`已从 CSV 添加 ${prompts.length} 条提示词`);
+    } catch (error) {
+      const message = (error as Error).message || '解析 CSV 文件失败';
+      toast.error(message);
+    }
+  };
+
   const handleBulkAdd = () => {
     const parsed = parseBulkInput(bulkInput);
     if (!parsed.length) {
@@ -479,6 +569,14 @@ export function VideoTaskForm({
         onChange={handleSingleImageChange}
         disabled={disableUpload}
       />
+      <input
+        ref={csvInputRef}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        onChange={handleCsvChange}
+        disabled={disableUpload}
+      />
       <ScrollArea className="flex-1 pr-4">
         <div className="space-y-6">
           <div className="space-y-3">
@@ -503,8 +601,14 @@ export function VideoTaskForm({
                 >
                   <ImagePlus className="mr-2 h-4 w-4" /> 添加单张图片
                 </Button>
-                <Button type="button" variant="outline" size="sm" onClick={() => addRow()}>
-                  <PlusIcon className="mr-2 h-4 w-4" /> 添加空行
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCsvButtonClick}
+                  disabled={disableUpload}
+                >
+                  <FileSpreadsheet className="mr-2 h-4 w-4" /> 批量添加图生视频 CSV
                 </Button>
               </div>
             </div>
